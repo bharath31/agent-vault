@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bharath31/nominee/main/.github/media/banner-ai.jpg" alt="nominee-ai" width="100%" />
+  <img src="https://raw.githubusercontent.com/bharath31/nominee/main/.github/media/banner-ai.png" alt="nominee-ai" width="100%" />
 </p>
 
 <p align="center">

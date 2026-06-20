@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bharath31/nominee/main/.github/media/banner-eve.jpg" alt="nominee-eve" width="100%" />
+  <img src="https://raw.githubusercontent.com/bharath31/nominee/main/.github/media/banner-eve.png" alt="nominee-eve" width="100%" />
 </p>
 
 <p align="center">

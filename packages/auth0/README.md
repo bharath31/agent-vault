@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bharath31/nominee/main/.github/media/banner-auth0.jpg" alt="nominee-auth0" width="100%" />
+  <img src="https://raw.githubusercontent.com/bharath31/nominee/main/.github/media/banner-auth0.png" alt="nominee-auth0" width="100%" />
 </p>
 
 <p align="center">

@@ -1,15 +1,15 @@
-<svg width="1280" height="400" viewBox="0 0 1280 400" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="nominee — identity and token delegation for AI agents">
+<svg width="1280" height="420" viewBox="0 0 1280 420" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="nominee — identity and token delegation for AI agents">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="400" gradientUnits="userSpaceOnUse">
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="420" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#0A1020"/>
       <stop offset="1" stop-color="#0B1226"/>
     </linearGradient>
     <radialGradient id="sealGlow" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#D9A441" stop-opacity="0.16"/>
+      <stop offset="0" stop-color="#D9A441" stop-opacity="0.18"/>
       <stop offset="1" stop-color="#D9A441" stop-opacity="0"/>
     </radialGradient>
-    <pattern id="engrave" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-      <line x1="0" y1="0" x2="0" y2="14" stroke="#D9A441" stroke-opacity="0.05" stroke-width="1"/>
+    <pattern id="engrave" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="16" stroke="#D9A441" stroke-opacity="0.045" stroke-width="1"/>
     </pattern>
     <style>
       .sans { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
@@ -17,63 +17,52 @@
     </style>
   </defs>
 
-  <!-- ground -->
-  <rect width="1280" height="400" fill="url(#bg)"/>
-  <rect width="1280" height="400" fill="url(#engrave)"/>
-  <!-- engraved certificate frame -->
-  <rect x="28" y="28" width="1224" height="344" rx="6" fill="none" stroke="#E8ECF6" stroke-opacity="0.12"/>
-  <rect x="34" y="34" width="1212" height="332" rx="4" fill="none" stroke="#D9A441" stroke-opacity="0.16"/>
+  <rect width="1280" height="420" fill="url(#bg)"/>
+  <rect width="1280" height="420" fill="url(#engrave)"/>
+  <rect x="28" y="28" width="1224" height="364" rx="6" fill="none" stroke="#E8ECF6" stroke-opacity="0.12"/>
+  <rect x="34" y="34" width="1212" height="352" rx="4" fill="none" stroke="#D9A441" stroke-opacity="0.16"/>
 
-  <!-- ===== signature: guilloché seal ===== -->
-  <g transform="translate(1058 200)">
+  <!-- ===== signature: clean guilloché seal ===== -->
+  <g transform="translate(1066 196)">
     <circle r="150" fill="url(#sealGlow)"/>
-    <!-- guilloché rosette -->
-    <g fill="none" stroke="#D9A441" stroke-opacity="0.42" stroke-width="0.8">
-      <ellipse rx="112" ry="34" transform="rotate(0)"/>
-      <ellipse rx="112" ry="34" transform="rotate(15)"/>
-      <ellipse rx="112" ry="34" transform="rotate(30)"/>
-      <ellipse rx="112" ry="34" transform="rotate(45)"/>
-      <ellipse rx="112" ry="34" transform="rotate(60)"/>
-      <ellipse rx="112" ry="34" transform="rotate(75)"/>
-      <ellipse rx="112" ry="34" transform="rotate(90)"/>
-      <ellipse rx="112" ry="34" transform="rotate(105)"/>
-      <ellipse rx="112" ry="34" transform="rotate(120)"/>
-      <ellipse rx="112" ry="34" transform="rotate(135)"/>
-      <ellipse rx="112" ry="34" transform="rotate(150)"/>
-      <ellipse rx="112" ry="34" transform="rotate(165)"/>
+    <g fill="none" stroke="#D9A441" stroke-opacity="0.4" stroke-width="0.9">
+      <ellipse rx="112" ry="30" transform="rotate(0)"/>
+      <ellipse rx="112" ry="30" transform="rotate(45)"/>
+      <ellipse rx="112" ry="30" transform="rotate(90)"/>
+      <ellipse rx="112" ry="30" transform="rotate(135)"/>
+      <ellipse rx="112" ry="56" transform="rotate(22.5)"/>
+      <ellipse rx="112" ry="56" transform="rotate(112.5)"/>
     </g>
-    <!-- concentric rings -->
-    <circle r="118" fill="none" stroke="#D9A441" stroke-opacity="0.55" stroke-width="1"/>
-    <circle r="86" fill="none" stroke="#D9A441" stroke-opacity="0.4" stroke-width="1"/>
-    <!-- tick ring -->
-    <circle r="102" fill="none" stroke="#D9A441" stroke-opacity="0.45" stroke-width="3" stroke-dasharray="1 9"/>
-    <!-- monogram -->
-    <text class="sans" x="0" y="26" text-anchor="middle" font-size="84" font-weight="600" fill="#E8ECF6" letter-spacing="-2">n</text>
+    <circle r="118" fill="none" stroke="#D9A441" stroke-opacity="0.6" stroke-width="1"/>
+    <circle r="104" fill="none" stroke="#D9A441" stroke-opacity="0.25" stroke-width="1"/>
+    <circle r="72" fill="none" stroke="#D9A441" stroke-opacity="0.45" stroke-width="1"/>
+    <circle r="72" fill="#0A1020" fill-opacity="0.55"/>
+    <text class="sans" x="0" y="26" text-anchor="middle" font-size="86" font-weight="600" fill="#E8ECF6" letter-spacing="-2">n</text>
   </g>
 
   <!-- ===== left content ===== -->
-  <text class="mono" x="80" y="118" font-size="13" letter-spacing="3.5" fill="#D9A441" fill-opacity="0.92">IDENTITY · TOKEN DELEGATION · ON YOUR BEHALF</text>
+  <text class="mono" x="82" y="112" font-size="13.5" letter-spacing="3.5" fill="#D9A441" fill-opacity="0.95">IDENTITY · TOKEN DELEGATION · ON YOUR BEHALF</text>
 
-  <text class="sans" x="76" y="212" font-size="98" font-weight="600" letter-spacing="-3" fill="#E8ECF6">nominee</text>
+  <text class="sans" x="78" y="206" font-size="92" font-weight="600" letter-spacing="-3" fill="#E8ECF6">nominee</text>
 
-  <text class="sans" x="80" y="256" font-size="21" fill="#7E8BA6">Fresh tokens and human approval for agents that act for your users.</text>
+  <text class="sans" x="82" y="250" font-size="21" fill="#7E8BA6">Fresh tokens and human approval for agents that act for your users.</text>
 
   <!-- delegation chain -->
-  <g class="mono" font-size="15" transform="translate(80 304)">
+  <g class="mono" font-size="15" transform="translate(82 298)">
     <text x="0" y="0" fill="#AEB9D0">you</text>
     <text x="46" y="0" fill="#D9A441">&#8594;</text>
     <text x="72" y="0" fill="#AEB9D0">agent</text>
     <text x="140" y="0" fill="#D9A441">&#8594;</text>
     <text x="166" y="0" fill="#AEB9D0">service</text>
-    <g transform="translate(252 -15)">
-      <rect width="148" height="22" rx="11" fill="#D9A441" fill-opacity="0.10" stroke="#D9A441" stroke-opacity="0.45"/>
-      <text x="14" y="15" font-size="12" fill="#D9A441">token · always fresh</text>
+    <g transform="translate(250 -15)">
+      <rect width="156" height="22" rx="11" fill="#D9A441" fill-opacity="0.10" stroke="#D9A441" stroke-opacity="0.4"/>
+      <text x="15" y="15" font-size="12" fill="#D9A441">token · always fresh</text>
     </g>
   </g>
 
-  <!-- install pill -->
-  <g transform="translate(80 332)">
-    <rect width="232" height="36" rx="8" fill="#D9A441" fill-opacity="0.06" stroke="#D9A441" stroke-opacity="0.5"/>
-    <text class="mono" x="18" y="23" font-size="15" fill="#E8ECF6"><tspan fill="#D9A441">›</tspan>  npm i nominee</text>
+  <!-- prominent install CTA -->
+  <g transform="translate(82 330)">
+    <rect width="372" height="54" rx="11" fill="#D9A441" fill-opacity="0.08" stroke="#D9A441" stroke-opacity="0.55"/>
+    <text class="mono" x="24" y="35" font-size="26" fill="#E8ECF6"><tspan fill="#D9A441" font-weight="500">›</tspan>  npm i nominee</text>
   </g>
 </svg>
