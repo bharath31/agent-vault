@@ -15,6 +15,17 @@
   The provider-neutral auth layer for agents that act on your behalf.
 </p>
 
+<p align="center">
+  <a href="https://nominee.dev">Website</a> ·
+  <a href="https://nominee.dev/docs/">Docs</a> ·
+  <a href="https://www.npmjs.com/package/nominee">npm</a> ·
+  <a href="SECURITY.md">Security</a>
+</p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bharath31/nominee/main/.github/media/demo.gif" alt="An agent run: the GitHub token expires, nominee refreshes it, the sensitive action pauses for human approval, then completes — with a full audit trail." width="100%" />
+</p>
+
 ---
 
 ## The Problem
@@ -200,6 +211,20 @@ const unsub = nominee.on((event) => console.log(event))
 
 ---
 
+## Why nominee
+
+The hard part of agent auth isn't the OAuth dance — it's keeping a token *fresh across a long run*, gating the risky calls, and proving who authorized what. nominee does all three, in one provider-neutral layer.
+
+| Capability | nominee | DIY token refresh | Vercel Connect | AI SDK approvals |
+| --- | :---: | :---: | :---: | :---: |
+| Fresh token at call time | ✅ built in | you build it | Vercel only | — |
+| Provider-neutral | ✅ any provider | yours | Vercel | n/a |
+| Human-in-the-loop approval | ✅ built in | — | — | ✅ |
+| Audit chain (user→agent→tool) | ✅ built in | — | partial | — |
+| No signup · zero-dep core | ✅ | ✅ | — | ✅ |
+
+---
+
 ## "Doesn't the AI SDK already have approvals?"
 
 Yes — AI SDK v6 added tool approvals. Nominee adds three things it doesn't cover:
@@ -212,7 +237,9 @@ Yes — AI SDK v6 added tool approvals. Nominee adds three things it doesn't cov
 
 ## Contributing
 
-PRs for community strategies (Clerk, Supabase, WorkOS, etc.) are enthusiastically welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) to learn how to build a strategy.
+PRs for community strategies (Clerk, Supabase, WorkOS, etc.) are enthusiastically welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) to learn how to build a strategy. By participating you agree to the [Code of Conduct](CODE_OF_CONDUCT.md).
+
+Found a security issue? Please report it privately — see [SECURITY.md](SECURITY.md).
 
 ---
 

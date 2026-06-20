@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/bharath31/nominee/security/advisories/new
+    about: Report security issues privately — please do not open a public issue.
+  - name: Docs & quickstart
+    url: https://nominee.dev/docs/
+    about: Read the docs before filing — your question may be answered there.

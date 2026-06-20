@@ -1,0 +1,28 @@
+name: Feature request
+description: Suggest an idea, a provider strategy, or a framework adapter
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the use case, not just the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed API or approach
+      render: typescript
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      options:
+        - New provider strategy (Clerk, Supabase, WorkOS, …)
+        - New framework adapter
+        - Core capability
+        - Docs / DX
+        - Other
+    validations:
+      required: true
