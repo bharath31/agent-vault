@@ -26,9 +26,9 @@ async function main() {
 
     // Global audit sink for all events
     onAudit: (event) => {
-      console.log(
-        `[Audit Log] ${event.action} | Status: ${event.status || 'success'} | Agent: ${event.agent || 'N/A'}`,
-      )
+      const what = event.action ?? event.connection ?? ''
+      const outcome = event.decision !== undefined ? ` ${event.decision}` : ''
+      console.log(`[Audit] ${event.type} ${what}${outcome} · agent=${event.agent ?? 'N/A'}`)
     },
 
     agent: 'example-bot',

@@ -1,0 +1,14 @@
+name = "nominee-cf-agent-demo"
+main = "src/index.ts"
+compatibility_date = "2026-06-20"
+compatibility_flags = ["nodejs_compat"]
+
+# Serve the demo under the existing domain at nominee.dev/agent
+# (Workers routes take precedence over Pages for matching paths on the zone).
+routes = [{ pattern = "nominee.dev/agent*", zone_name = "nominee.dev" }]
+
+[ai]
+binding = "AI"
+
+[observability]
+enabled = true

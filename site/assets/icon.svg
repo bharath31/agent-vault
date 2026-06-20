@@ -1,12 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="nominee">
-  <defs>
-    <linearGradient id="g" x1="10" y1="8" x2="54" y2="56" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#9d7cff"/>
-      <stop offset="1" stop-color="#55c8ff"/>
-    </linearGradient>
-  </defs>
-  <rect width="64" height="64" rx="14" fill="#07080c"/>
-  <path d="M32 9 50 16v14c0 12-7.6 20.8-18 25-10.4-4.2-18-13-18-25V16l18-7Z" fill="none" stroke="url(#g)" stroke-width="4" stroke-linejoin="round"/>
-  <circle cx="38" cy="25" r="7" fill="url(#g)"/>
-  <path d="M34 29 22 41v6h7v-4h4v-4h4l6-6" fill="none" stroke="url(#g)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="nominee">
+  <rect width="64" height="64" rx="14" fill="#0e1730" />
+  <g fill="none" stroke="#c79a4a" stroke-width="1.1" stroke-opacity="0.95">
+    <circle cx="32" cy="32" r="22" />
+    <ellipse cx="32" cy="32" rx="22" ry="8" />
+    <ellipse cx="32" cy="32" rx="22" ry="8" transform="rotate(30 32 32)" />
+    <ellipse cx="32" cy="32" rx="22" ry="8" transform="rotate(60 32 32)" />
+    <ellipse cx="32" cy="32" rx="22" ry="8" transform="rotate(90 32 32)" />
+    <ellipse cx="32" cy="32" rx="22" ry="8" transform="rotate(120 32 32)" />
+    <ellipse cx="32" cy="32" rx="22" ry="8" transform="rotate(150 32 32)" />
+  </g>
+  <text x="32" y="42" text-anchor="middle" font-family="'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif" font-size="28" font-weight="600" fill="#d9a441">n</text>
 </svg>

@@ -315,6 +315,9 @@ footer { position: relative; z-index: 2; max-width: var(--maxw); margin: clamp(7
 .star-cta:hover { transform: translateY(-2px); }
 .badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 26px; }
 .badges img { height: 20px; }
+.cta-live { margin-top: 18px; font-family: var(--mono); font-size: 13px; }
+.cta-live a { color: var(--muted); border-bottom: 1px solid var(--hairline); padding-bottom: 2px; }
+.cta-live a:hover { color: var(--seal); border-color: var(--seal); }
 
 @media (max-width: 860px) {
   .term-body { min-height: 320px; font-size: 12.5px; }
