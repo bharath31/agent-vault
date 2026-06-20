@@ -1,6 +1,6 @@
 {
   "name": "nominee-ai",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Nominee adapter for the Vercel AI SDK — fresh tokens and human-in-the-loop approval for AI SDK tools",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -29,7 +29,9 @@
     "directory": "packages/ai"
   },
   "homepage": "https://github.com/bharath31/nominee#readme",
-  "publishConfig": { "access": "public" },
+  "publishConfig": {
+    "access": "public"
+  },
   "peerDependencies": {
     "nominee": ">=0.1.0",
     "ai": "^5 || ^6",
