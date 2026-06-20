@@ -1,5 +1,11 @@
 # nominee
 
+[![npm](https://img.shields.io/npm/v/nominee?label=nominee)](https://www.npmjs.com/package/nominee)
+[![npm](https://img.shields.io/npm/v/nominee-ai?label=nominee-ai)](https://www.npmjs.com/package/nominee-ai)
+[![npm](https://img.shields.io/npm/v/nominee-eve?label=nominee-eve)](https://www.npmjs.com/package/nominee-eve)
+[![npm](https://img.shields.io/npm/v/nominee-auth0?label=nominee-auth0)](https://www.npmjs.com/package/nominee-auth0)
+[![license](https://img.shields.io/npm/l/nominee)](LICENSE)
+
 **Identity and token delegation for AI agents.**
 
 You authorized the agent at 9am. By 3pm, the GitHub token has expired, but the agent is still running in a Durable Object, or pausing for human input, or looping over a massive codebase. Suddenly: silent `401 Unauthorized` errors.

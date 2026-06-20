@@ -29,20 +29,17 @@ long-running / durable agent execution.
 ```
 packages/
   core/    → published as `nominee`        — engine, Strategy interface, tokens()/OAuth2()/Memory(), approval engine, audit. NO provider deps.
-  ai/      → `nominee-ai`                  — Vercel AI SDK adapter (also covers Cloudflare Agents; `agents` has ai@^6 as a peer). DUAL esm+cjs.
+  ai/      → `nominee-ai`                  — Vercel AI SDK adapter (also covers Cloudflare Agents). DUAL esm+cjs.
   eve/     → `nominee-eve`                 — Vercel Eve adapter. ESM-ONLY (Eve is ESM-only; defineTool brands its output so we must call it).
   auth0/   → `nominee-auth0`               — optional Auth0 strategy: Token Vault getToken + CIBA requestApproval. Hand-rolled HTTP, zero heavy deps.
-examples/  → (TODO) standalone-node, vercel-ai-github, eve-agent
+examples/  → standalone-node, vercel-ai-github, eve-agent
 ```
-
-Scoped packages publish under the `nominee-*` npm org (must be created — see Phase 5 in PROGRESS.md). Core `nominee` is already published (placeholder `0.0.1`).
 
 ## Public API (keep it tiny — DX/AX is a first principle)
 
 ```ts
 import { Nominee } from 'nominee'
 
-// Simplest: a function strategy. No provider, no signup.
 const nominee = new Nominee({
   strategy: ({ connection }) => process.env[`${connection.toUpperCase()}_TOKEN`]!,
   onApprovalRequest: async (req) => notifyUser(req),   // optional HITL
@@ -53,7 +50,7 @@ const nominee = new Nominee({
 await nominee.token({ user, connection })          // fresh token, auto-refreshed
 await nominee.approve({ user, action, detail })     // resolves on approve, throws ApprovalDeniedError on deny/expire
 nominee.resolveApproval(id, 'approved'|'denied')    // settle built-in approvals (from your webhook)
-await nominee.can({ user, action, resource })       // FGA — interface only; throws unless strategy implements it (v0.2)
+await nominee.can({ user, action, resource })       // FGA — interface only; throws unless strategy implements it
 nominee.on((event) => ...)                           // audit stream; returns unsubscribe
 ```
 
@@ -69,7 +66,7 @@ resolver). `execute(input, ctx)` where ctx = `{ token?, user, ai|eve }`.
 ```bash
 pnpm install                 # workspace install (Node 20+, pnpm 10)
 pnpm -r build                # tsup build all packages (esm/cjs + dts)
-pnpm -r test                 # vitest (53 tests currently)
+pnpm -r test                 # vitest
 pnpm -r typecheck            # tsc --noEmit
 pnpm biome check .           # lint+format check
 pnpm biome check --write .   # autofix
@@ -85,12 +82,10 @@ Per-package: `pnpm --filter nominee test`, `pnpm --filter nominee-ai build`, etc
   `noExplicitAny` is OFF; `noNonNullAssertion` is OFF in test/example files only.
 - Each package: `tsup.config.ts`, `tsconfig.json` (extends `../../tsconfig.base.json`,
   adds `types: ["node"]`), `src/index.ts` barrel, `test/*.test.ts`.
-- Conventional-ish commit messages; end commits with the Co-Authored-By trailer.
+- Conventional commit messages.
 
-## Gotchas (learned the hard way)
+## Gotchas
 
-- **npm name-similarity filter** rejected `vault0`, `agent-vault`, `stead` etc.
-  The name landed on `nominee` (published). Don't rename.
 - **pnpm ignores build scripts** for `esbuild`/`@biomejs/biome` by default. They
   are listed in root `package.json` `pnpm.onlyBuiltDependencies`; if a fresh
   clone fails to build, run `pnpm rebuild esbuild @biomejs/biome`.
@@ -100,17 +95,8 @@ Per-package: `pnpm --filter nominee test`, `pnpm --filter nominee-ai build`, etc
 - **Eve `defineTool` brands its output and rejects raw objects** — the eve
   adapter MUST import and call `defineTool` from `eve/tools`. Eve is ESM-only, so
   `nominee-eve` is ESM-only too.
-- **Auth0 contract is hand-rolled** from the real `@auth0/ai` source (verified):
-  - Token Vault: `POST /oauth/token`, JSON body, grant
-    `urn:auth0:params:oauth:grant-type:token-exchange:federated-connection-access-token`,
-    `requested_token_type: http://auth0.com/oauth/token-type/federated-connection-access-token`.
+- **Auth0 contract** (hand-rolled HTTP, zero heavy deps):
+  - Token Vault: `POST /oauth/token`, grant `urn:auth0:params:oauth:grant-type:token-exchange:federated-connection-access-token`.
   - CIBA: `POST /bc-authorize` → `{auth_req_id, interval, expires_in}`, then poll
     `POST /oauth/token` grant `urn:openid:params:grant-type:ciba`.
-  Tests mock HTTP. **Not yet validated against a live tenant** — do that before 1.0.
-
-## Status & what's next
-
-See `PROGRESS.md` for the live checklist. Short version: core + all 3 adapters/
-strategy are built, tested, green. **Remaining: examples, README + CONTRIBUTING,
-npm org creation, publish (Phase 4–5).** The approved plan is at
-`~/.claude/plans/then-create-a-plan-bright-penguin.md`.
+  - Not yet validated against a live tenant — do that before 1.0.
