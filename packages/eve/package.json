@@ -1,6 +1,6 @@
 {
   "name": "nominee-eve",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Nominee adapter for Vercel Eve — fresh tokens and human-in-the-loop approval for Eve agent tools",
   "type": "module",
   "module": "./dist/index.js",

@@ -3,172 +3,228 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>nominee - identity and token delegation for AI agents</title>
+    <title>nominee — identity & token delegation for AI agents</title>
     <meta
       name="description"
-      content="nominee gives AI agents fresh third-party tokens at tool-call time, with optional human approval and audit trails."
+      content="nominee gives AI agents a fresh third-party token at the moment of a tool call, with optional human approval and an audit trail. Provider-neutral. Install and go."
     />
-    <meta name="theme-color" content="#07080c" />
+    <meta name="theme-color" content="#0A1020" />
     <meta property="og:title" content="nominee" />
     <meta
       property="og:description"
-      content="The provider-neutral auth layer for agents that act on behalf of users."
+      content="Identity & token delegation for AI agents. Fresh tokens at call time, human approval, audit — provider-neutral."
     />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://nominee.dev" />
-    <meta property="og:image" content="https://nominee.dev/assets/banner.jpg" />
+    <meta property="og:image" content="https://nominee.dev/assets/banner.svg" />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" href="/assets/icon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
+    <div class="frame" aria-hidden="true"></div>
+
     <header class="site-header">
       <a class="brand" href="/" aria-label="nominee home">
-        <span class="brand-mark" aria-hidden="true"></span>
+        <svg class="brand-seal" viewBox="0 0 40 40" aria-hidden="true">
+          <g fill="none" stroke="currentColor" stroke-opacity="0.9" stroke-width="1">
+            <circle cx="20" cy="20" r="15" />
+            <circle cx="20" cy="20" r="11" stroke-opacity="0.5" />
+            <ellipse cx="20" cy="20" rx="15" ry="5" stroke-opacity="0.5" />
+            <ellipse cx="20" cy="20" rx="15" ry="5" stroke-opacity="0.5" transform="rotate(60 20 20)" />
+            <ellipse cx="20" cy="20" rx="15" ry="5" stroke-opacity="0.5" transform="rotate(120 20 20)" />
+          </g>
+        </svg>
         <span>nominee</span>
       </a>
-      <nav aria-label="Primary navigation">
+      <nav aria-label="Primary">
+        <a href="#install">Install</a>
         <a href="#packages">Packages</a>
-        <a href="/docs/">Docs</a>
         <a href="#approval">Approval</a>
-        <a href="https://github.com/bharath31/nominee">GitHub</a>
+        <a href="/docs/">Docs</a>
+        <a class="nav-cta" href="https://github.com/bharath31/nominee">GitHub ↗</a>
       </nav>
     </header>
 
     <main>
       <section class="hero">
         <div class="hero-copy">
-          <p class="eyebrow">Provider-neutral agent auth</p>
-          <h1>Fresh user tokens at the exact moment an agent acts.</h1>
+          <p class="eyebrow">Identity · Token delegation · On your behalf</p>
+          <h1>Your agent acts.<br /><span class="ink-soft">You stay in control.</span></h1>
           <p class="lede">
-            nominee is the identity and token delegation layer for AI agents:
-            fetch fresh third-party access tokens, pause for human approval when
-            needed, and keep an audit trail across frameworks.
+            nominee hands your agent a <em>fresh</em> third-party token at the exact
+            moment of a tool call — pauses for human approval when it matters, and
+            records who authorized what. Provider-neutral. No signup to start.
           </p>
           <div class="hero-actions">
-            <a class="button primary" href="https://www.npmjs.com/package/nominee">npm i nominee</a>
-            <a class="button secondary" href="/docs/">Read the docs</a>
+            <button class="copy" data-copy="npm i nominee" aria-label="Copy install command">
+              <span class="prompt">›</span><span class="cmd">npm i nominee</span><span class="copy-hint">copy</span>
+            </button>
+            <a class="text-link" href="/docs/">Read the docs →</a>
           </div>
+          <p class="trust">Works standalone, with the Vercel AI SDK, Eve, and Cloudflare Agents.</p>
         </div>
 
-        <aside class="terminal-card" aria-label="nominee quickstart">
-          <div class="terminal-top">
-            <span></span><span></span><span></span>
-            <strong>tool-call.ts</strong>
+        <!-- signature: a stamped credential -->
+        <aside class="credential" aria-label="How a delegated token flows">
+          <span class="cred-corner tl"></span><span class="cred-corner tr"></span>
+          <span class="cred-corner bl"></span><span class="cred-corner br"></span>
+
+          <div class="cred-head">
+            <span class="cred-label">Letter of authority</span>
+            <span class="cred-id">No. 2026</span>
           </div>
-          <pre><code>import { Nominee, tokens } from 'nominee'
 
-const nominee = new Nominee({
-  strategy: tokens(({ user, connection }) =>
-    db.getFreshToken(user, connection)
-  ),
-  agent: 'triage-bot',
-})
+          <div class="chain" role="img" aria-label="you to agent to service">
+            <div class="chain-node"><span>you</span><small>principal</small></div>
+            <div class="chain-link"><span class="dot"></span></div>
+            <div class="chain-node mid"><span>agent</span><small>nominee</small></div>
+            <div class="chain-link"><span class="dot"></span></div>
+            <div class="chain-node"><span>github</span><small>service</small></div>
+          </div>
 
-const token = await nominee.token({
-  user: 'alice',
-  connection: 'github',
-})</code></pre>
+          <div class="token-row">
+            <div class="token-key">access token</div>
+            <div class="token-bar"><span class="token-fill"></span></div>
+            <div class="token-state">fresh · auto-refreshed</div>
+          </div>
+
+          <svg class="cred-seal" viewBox="0 0 120 120" aria-hidden="true">
+            <g fill="none" stroke="currentColor" stroke-width="0.8" stroke-opacity="0.5">
+              <ellipse cx="60" cy="60" rx="48" ry="15" transform="rotate(0 60 60)" />
+              <ellipse cx="60" cy="60" rx="48" ry="15" transform="rotate(30 60 60)" />
+              <ellipse cx="60" cy="60" rx="48" ry="15" transform="rotate(60 60 60)" />
+              <ellipse cx="60" cy="60" rx="48" ry="15" transform="rotate(90 60 60)" />
+              <ellipse cx="60" cy="60" rx="48" ry="15" transform="rotate(120 60 60)" />
+              <ellipse cx="60" cy="60" rx="48" ry="15" transform="rotate(150 60 60)" />
+            </g>
+            <circle cx="60" cy="60" r="50" fill="none" stroke="currentColor" stroke-opacity="0.7" />
+            <circle cx="60" cy="60" r="37" fill="none" stroke="currentColor" stroke-opacity="0.35" stroke-dasharray="1 6" stroke-width="2" />
+            <text x="60" y="74" text-anchor="middle" font-family="'Schibsted Grotesk',sans-serif" font-size="42" font-weight="600" fill="currentColor">n</text>
+          </svg>
+          <span class="cred-stamp">Delegated · revocable · audited</span>
         </aside>
       </section>
 
-      <section class="strip" aria-label="Core promise">
-        <div>
-          <strong>No signup by default</strong>
-          <span>Bring a function, env var, database lookup, or OAuth refresh flow.</span>
+      <section class="strip" aria-label="Why nominee">
+        <div><strong>No signup by default</strong><span>Bring a function, env var, DB lookup, or OAuth refresh. Auth0 is optional.</span></div>
+        <div><strong>Zero deps in core</strong><span>Provider and framework code lives in optional adapter packages.</span></div>
+        <div><strong>Made for durable runs</strong><span>Ask for a token at call time — never hand a paused agent a stale one.</span></div>
+      </section>
+
+      <section class="section" id="install">
+        <div class="section-heading">
+          <p class="eyebrow">Install and go</p>
+          <h2>Six lines. No service to sign up for.</h2>
+          <p>Give nominee a way to get a token. It handles freshness, approval, and audit on top.</p>
         </div>
-        <div>
-          <strong>Zero runtime deps in core</strong>
-          <span>Provider and framework dependencies live in optional packages.</span>
-        </div>
-        <div>
-          <strong>Built for long-running agents</strong>
-          <span>Call `nominee.token()` at execution time instead of capturing stale tokens.</span>
+        <div class="code-card">
+          <div class="code-top"><span class="tab active">default</span><span class="tab">ai sdk</span><span class="tab">auth0</span><span class="file">agent.ts</span></div>
+          <pre><code><span class="k">import</span> { Nominee } <span class="k">from</span> <span class="s">'nominee'</span>
+
+<span class="c">// the whole setup — a function that returns a token</span>
+<span class="k">const</span> nominee = <span class="k">new</span> <span class="t">Nominee</span>({
+  strategy: ({ connection }) => process.env[<span class="s">`${connection.toUpperCase()}_TOKEN`</span>]!,
+})
+
+<span class="c">// at tool-call time — always fresh, cached until just before expiry</span>
+<span class="k">const</span> token = <span class="k">await</span> nominee.<span class="fn">token</span>({ user: <span class="s">'alice'</span>, connection: <span class="s">'github'</span> })</code></pre>
         </div>
       </section>
 
       <section class="section" id="packages">
         <div class="section-heading">
           <p class="eyebrow">Packages</p>
-          <h2>Use nominee anywhere your agent runs.</h2>
+          <h2>One auth layer, wherever your agent runs.</h2>
         </div>
         <div class="package-grid">
-          <a class="package-card violet" href="https://www.npmjs.com/package/nominee">
-            <span>Core</span>
+          <a class="package-card" href="https://www.npmjs.com/package/nominee">
+            <span class="pc-tag">Core</span>
             <h3>nominee</h3>
-            <p>Engine, strategies, token cache, approvals, and audit stream.</p>
+            <p>Engine, strategies, token cache, approvals, audit stream. Zero runtime deps.</p>
             <code>npm i nominee</code>
           </a>
-          <a class="package-card blue" href="https://www.npmjs.com/package/nominee-ai">
-            <span>AI SDK</span>
+          <a class="package-card" href="https://www.npmjs.com/package/nominee-ai">
+            <span class="pc-tag">Vercel AI SDK</span>
             <h3>nominee-ai</h3>
-            <p>Inject fresh tokens and approvals into Vercel AI SDK tools.</p>
+            <p>Fresh tokens and approval gates inside AI SDK tools. Runs on Cloudflare Agents too.</p>
             <code>npm i nominee nominee-ai</code>
           </a>
-          <a class="package-card amber" href="https://www.npmjs.com/package/nominee-auth0">
-            <span>Managed strategy</span>
-            <h3>nominee-auth0</h3>
-            <p>Auth0 Token Vault for federated tokens and CIBA approvals.</p>
-            <code>npm i nominee nominee-auth0</code>
-          </a>
-          <a class="package-card green" href="https://www.npmjs.com/package/nominee-eve">
-            <span>Eve</span>
+          <a class="package-card" href="https://www.npmjs.com/package/nominee-eve">
+            <span class="pc-tag">Vercel Eve</span>
             <h3>nominee-eve</h3>
-            <p>Wrap Eve tools with nominee token injection and approval gates.</p>
+            <p>Wrap Eve tools with nominee token injection and human-in-the-loop approval.</p>
             <code>npm i nominee nominee-eve</code>
           </a>
-        </div>
-      </section>
-
-      <section class="section flow-section">
-        <div class="section-heading narrow">
-          <p class="eyebrow">Token flow</p>
-          <h2>Never hand a captured token to a durable agent.</h2>
-          <p>
-            Agents ask nominee for a token at the moment of a tool call.
-            nominee returns the cached token only when it is still fresh; otherwise
-            it asks your strategy for a new one.
-          </p>
-        </div>
-        <div class="flow" aria-label="Token lifecycle diagram">
-          <div class="node">Agent tool call</div>
-          <div class="line"></div>
-          <div class="node active">nominee.token()</div>
-          <div class="line"></div>
-          <div class="node">Strategy refresh</div>
-          <div class="line"></div>
-          <div class="node">Third-party API</div>
+          <a class="package-card" href="https://www.npmjs.com/package/nominee-auth0">
+            <span class="pc-tag">Optional · Managed</span>
+            <h3>nominee-auth0</h3>
+            <p>Auth0 Token Vault for federated tokens, and CIBA approvals on the user's phone.</p>
+            <code>npm i nominee nominee-auth0</code>
+          </a>
         </div>
       </section>
 
       <section class="section approval" id="approval">
-        <div>
-          <p class="eyebrow">Human approval</p>
-          <h2>Pause sensitive actions before the tool runs.</h2>
+        <div class="section-heading narrow">
+          <p class="eyebrow">Human in the loop</p>
+          <h2>Hold the risky actions until a person says yes.</h2>
           <p>
-            Gate actions such as deleting repositories, sending email, or changing
-            billing state. Use the built-in approval engine or a native strategy
-            such as Auth0 CIBA.
+            Gate deletes, payments, or outbound mail. Use the built-in approval
+            engine, or a native flow like Auth0 CIBA that pings the user's phone —
+            the agent pauses without burning compute, then resumes.
           </p>
         </div>
-        <div class="approval-card">
-          <span class="status">Waiting for approval</span>
+        <div class="approval-card" role="status">
+          <div class="ac-head"><span class="ac-dot"></span> Awaiting approval</div>
           <h3>repo.delete</h3>
-          <p>Delete repository: alice/old-project</p>
-          <div class="approval-actions">
-            <span>Deny</span>
-            <strong>Approve</strong>
-          </div>
+          <p>Delete repository <strong>alice/old-project</strong></p>
+          <div class="ac-actions"><span class="deny">Deny</span><span class="approve">Approve</span></div>
+          <div class="ac-foot">user → triage-bot → github · logged to audit</div>
         </div>
       </section>
     </main>
 
     <footer>
-      <span>Built for agents that act on behalf of users.</span>
-      <div>
+      <div class="foot-brand">
+        <svg class="brand-seal" viewBox="0 0 40 40" aria-hidden="true">
+          <g fill="none" stroke="currentColor" stroke-opacity="0.8" stroke-width="1">
+            <circle cx="20" cy="20" r="15" /><circle cx="20" cy="20" r="11" stroke-opacity="0.5" />
+          </g>
+        </svg>
+        <span>nominee</span>
+      </div>
+      <p class="foot-note">
+        Built by <a href="https://bharath.sh">Bharath</a> at Auth0. Neutral by design —
+        Auth0 is one strategy of many. PRs for other providers welcome.
+      </p>
+      <div class="foot-links">
         <a href="https://github.com/bharath31/nominee">GitHub</a>
         <a href="/docs/">Docs</a>
         <a href="https://www.npmjs.com/package/nominee">npm</a>
+        <span>MIT</span>
       </div>
     </footer>
+
+    <script>
+      for (const btn of document.querySelectorAll('.copy')) {
+        btn.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(btn.dataset.copy)
+            btn.classList.add('copied')
+            const hint = btn.querySelector('.copy-hint')
+            const prev = hint.textContent
+            hint.textContent = 'copied ✓'
+            setTimeout(() => { hint.textContent = prev; btn.classList.remove('copied') }, 1400)
+          } catch {}
+        })
+      }
+    </script>
   </body>
 </html>

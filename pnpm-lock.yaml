@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  human-id: ^3.0.0
+
 importers:
 
   .:
@@ -1403,9 +1406,8 @@ packages:
   httpxy@0.5.3:
     resolution: {integrity: sha512-SMS9V6Sn7VWaS11lYhoAr0ceoaiolTWf4jYdJn0NJhCdKMu9R2H9Fh0LBDWBHQF6HRLI1PmaePYsjanSpE5PEw==}
 
-  human-id@4.2.0:
-    resolution: {integrity: sha512-K3GbkIWqyvvlpfhBPlbEvD97TtqBpAYA4kt+cn2lD2x2HuohzZCibcA2nOlnJT6exqvJLggoB5nv2dNf192nEA==}
-    hasBin: true
+  human-id@3.0.1:
+    resolution: {integrity: sha512-ybmpj4dxA6492SkdUk0CE2Dg/O5KpByoai7UuTeUEtQK2YuR0OYlC9iUzEfj3ralha4ip8TV1ALq7mRJ2LadxA==}
 
   iconv-lite@0.7.2:
     resolution: {integrity: sha512-im9DjEDQ55s9fL4EYzOAv0yMqmMBSZp6G0VvFyTMPKWxiSBHUj9NW/qqLmXUwXrrM7AvqSlTCfvqRb0cM8yYqw==}
@@ -2201,7 +2203,7 @@ snapshots:
     dependencies:
       '@changesets/types': 6.1.0
       fs-extra: 7.0.1
-      human-id: 4.2.0
+      human-id: 3.0.1
       prettier: 2.8.8
 
   '@emnapi/core@1.11.1':
@@ -3011,7 +3013,7 @@ snapshots:
 
   httpxy@0.5.3: {}
 
-  human-id@4.2.0: {}
+  human-id@3.0.1: {}
 
   iconv-lite@0.7.2:
     dependencies:
