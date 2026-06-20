@@ -23,7 +23,7 @@
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bharath31/nominee/main/.github/media/demo.gif" alt="An agent run: the GitHub token expires, nominee refreshes it, the sensitive action pauses for human approval, then completes — with a full audit trail." width="100%" />
+  <img src="https://raw.githubusercontent.com/bharath31/nominee/main/.github/media/demo.gif?v=1" alt="An agent run: the GitHub token expires, nominee refreshes it, the sensitive action pauses for human approval, then completes — with a full audit trail." width="100%" />
 </p>
 
 ---

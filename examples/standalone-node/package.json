@@ -5,7 +5,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"No tests\""
+    "dev": "tsx index.ts",
+    "start": "tsx index.ts"
   },
   "keywords": [],
   "author": "",

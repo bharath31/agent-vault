@@ -18,7 +18,7 @@ export const nominee = new Nominee({
     }, 2000)
   },
   onAudit: (e) => {
-    console.log(`[Audit] ${e.agent} | Action: ${e.action} | Status: ${e.status || 'success'}`)
+    console.log(`[Audit] ${e.type} | ${e.action ?? e.connection ?? ''} ${e.decision ?? ''}`.trim())
   },
   agent: 'eve-demo-agent',
 })

@@ -5,7 +5,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"No tests\""
+    "dev": "tsx index.ts",
+    "start": "tsx index.ts"
   },
   "keywords": [],
   "author": "",
@@ -20,8 +21,8 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@types/node": "^26.0.0",
+    "@types/node": "^22.19.21",
     "tsx": "^4.22.4",
-    "typescript": "^6.0.3"
+    "typescript": "^5.9.3"
   }
 }
