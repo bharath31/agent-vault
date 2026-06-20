@@ -6,19 +6,30 @@
     <title>nominee — identity & token delegation for AI agents</title>
     <meta
       name="description"
-      content="nominee gives AI agents a fresh third-party token at the moment of a tool call, with optional human approval and an audit trail. Provider-neutral. Install and go."
+      content="nominee hands your AI agent a fresh third-party token at the moment of a tool call — with optional human approval and an audit trail. Provider-neutral. Install and go."
     />
+    <link rel="canonical" href="https://nominee.dev/" />
     <meta name="theme-color" content="#0A1020" />
-    <meta property="og:title" content="nominee" />
+    <meta property="og:title" content="nominee — token delegation for AI agents" />
     <meta
       property="og:description"
-      content="Identity & token delegation for AI agents. Fresh tokens at call time, human approval, audit — provider-neutral."
+      content="A fresh third-party token at the moment of a tool call. Human approval when it matters. Full audit. Provider-neutral, install and go."
     />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://nominee.dev" />
-    <meta property="og:image" content="https://nominee.dev/assets/banner.svg" />
+    <meta property="og:url" content="https://nominee.dev/" />
+    <meta property="og:image" content="https://nominee.dev/assets/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="nominee — token delegation for AI agents" />
+    <meta
+      name="twitter:description"
+      content="A fresh third-party token at the moment of a tool call. Human approval when it matters. Provider-neutral."
+    />
+    <meta name="twitter:image" content="https://nominee.dev/assets/og.png" />
     <link rel="icon" href="/assets/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/assets/icon-192.png" />
+    <link rel="manifest" href="/manifest.json" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -26,6 +37,20 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/styles.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "nominee",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Node.js, Cloudflare Workers, any JS runtime",
+        "description": "Identity and token delegation for AI agents: fresh third-party tokens at tool-call time, human-in-the-loop approval, and an audit trail. Provider-neutral.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "url": "https://nominee.dev/",
+        "license": "https://opensource.org/licenses/MIT",
+        "author": { "@type": "Person", "name": "Bharath", "url": "https://bharath.sh" }
+      }
+    </script>
   </head>
   <body>
     <div class="frame" aria-hidden="true"></div>
@@ -44,9 +69,9 @@
         <span>nominee</span>
       </a>
       <nav aria-label="Primary">
-        <a href="#install">Install</a>
+        <a href="#how">How it works</a>
+        <a href="#compare">Why nominee</a>
         <a href="#packages">Packages</a>
-        <a href="#approval">Approval</a>
         <a href="/docs/">Docs</a>
         <a class="nav-cta" href="https://github.com/bharath31/nominee">GitHub ↗</a>
       </nav>
@@ -68,47 +93,27 @@
             </button>
             <a class="text-link" href="/docs/">Read the docs →</a>
           </div>
-          <p class="trust">Works standalone, with the Vercel AI SDK, Eve, and Cloudflare Agents.</p>
+          <p class="trust">Standalone · Vercel AI SDK · Eve · Cloudflare Agents · Auth0 (optional)</p>
         </div>
 
-        <!-- signature: a stamped credential -->
-        <aside class="credential" aria-label="How a delegated token flows">
-          <span class="cred-corner tl"></span><span class="cred-corner tr"></span>
-          <span class="cred-corner bl"></span><span class="cred-corner br"></span>
-
-          <div class="cred-head">
-            <span class="cred-label">Letter of authority</span>
-            <span class="cred-id">No. 2026</span>
+        <!-- the proof: an agent run, start to finish -->
+        <div class="term" data-demo aria-label="Example agent run with nominee">
+          <div class="term-top">
+            <span class="td-dot"></span><span class="td-dot"></span><span class="td-dot"></span>
+            <span class="term-title">triage-agent · run</span>
           </div>
-
-          <div class="chain" role="img" aria-label="you to agent to service">
-            <div class="chain-node"><span>you</span><small>principal</small></div>
-            <div class="chain-link"><span class="dot"></span></div>
-            <div class="chain-node mid"><span>agent</span><small>nominee</small></div>
-            <div class="chain-link"><span class="dot"></span></div>
-            <div class="chain-node"><span>github</span><small>service</small></div>
+          <div class="term-body">
+            <p class="tl" data-d="120"><span class="muted">$</span> agent run <span class="str">"close stale issues in acme/api"</span></p>
+            <p class="tl" data-d="700"><span class="muted">→</span> tool <span class="hl">github.close_issue</span> <span class="muted">#1242</span></p>
+            <p class="tl bad" data-d="900"><span>✗</span> 401 — github token expired <span class="muted">(authorized 6h ago)</span></p>
+            <p class="tl" data-d="800"><span class="acc">↻</span> nominee — refreshing token via your strategy… <span class="ok">ok</span></p>
+            <p class="tl" data-d="500"><span class="acc">⚸</span> approval required <span class="muted">close_issue · acme/api#1242</span></p>
+            <p class="tl dim" data-d="1100">&nbsp;&nbsp;&nbsp;▸ pushed to your phone — waiting…</p>
+            <p class="tl" data-d="700"><span class="ok">✓</span> approved by <span class="hl">alice</span> <span class="muted">(2.3s)</span></p>
+            <p class="tl" data-d="700"><span class="ok">✓</span> issue #1242 closed</p>
+            <p class="tl" data-d="900"><span class="acc">⊞</span> audit <span class="muted">you → triage-bot → github</span> close_issue <span class="ok">approved</span></p>
           </div>
-
-          <div class="token-row">
-            <div class="token-key">access token</div>
-            <div class="token-bar"><span class="token-fill"></span></div>
-            <div class="token-state">fresh · auto-refreshed</div>
-          </div>
-
-          <svg class="cred-seal" viewBox="0 0 120 120" aria-hidden="true">
-            <g fill="none" stroke="currentColor" stroke-width="0.8" stroke-opacity="0.5">
-              <ellipse cx="60" cy="60" rx="48" ry="15" transform="rotate(0 60 60)" />
-              <ellipse cx="60" cy="60" rx="48" ry="15" transform="rotate(30 60 60)" />
-              <ellipse cx="60" cy="60" rx="48" ry="15" transform="rotate(60 60 60)" />
-              <ellipse cx="60" cy="60" rx="48" ry="15" transform="rotate(90 60 60)" />
-              <ellipse cx="60" cy="60" rx="48" ry="15" transform="rotate(120 60 60)" />
-              <ellipse cx="60" cy="60" rx="48" ry="15" transform="rotate(150 60 60)" />
-            </g>
-            <circle cx="60" cy="60" r="50" fill="none" stroke="currentColor" stroke-opacity="0.7" />
-            <circle cx="60" cy="60" r="37" fill="none" stroke="currentColor" stroke-opacity="0.35" stroke-dasharray="1 6" stroke-width="2" />
-            <text x="60" y="74" text-anchor="middle" font-family="'Schibsted Grotesk',sans-serif" font-size="42" font-weight="600" fill="currentColor">n</text>
-          </svg>
-        </aside>
+        </div>
       </section>
 
       <section class="strip" aria-label="Why nominee">
@@ -123,9 +128,15 @@
           <h2>Six lines. No service to sign up for.</h2>
           <p>Give nominee a way to get a token. It handles freshness, approval, and audit on top.</p>
         </div>
-        <div class="code-card">
-          <div class="code-top"><span class="tab active">default</span><span class="tab">ai sdk</span><span class="tab">auth0</span><span class="file">agent.ts</span></div>
-          <pre><code><span class="k">import</span> { Nominee } <span class="k">from</span> <span class="s">'nominee'</span>
+        <div class="code-card" data-tabs>
+          <div class="code-top" role="tablist" aria-label="Setup examples">
+            <button class="tab active" data-tab="default" role="tab" aria-selected="true">default</button>
+            <button class="tab" data-tab="ai" role="tab" aria-selected="false">ai sdk</button>
+            <button class="tab" data-tab="auth0" role="tab" aria-selected="false">auth0</button>
+            <span class="file">agent.ts</span>
+            <button class="code-copy" aria-label="Copy code">copy</button>
+          </div>
+          <pre data-panel="default"><code><span class="k">import</span> { Nominee } <span class="k">from</span> <span class="s">'nominee'</span>
 
 <span class="c">// the whole setup — a function that returns a token</span>
 <span class="k">const</span> nominee = <span class="k">new</span> <span class="t">Nominee</span>({
@@ -134,7 +145,109 @@
 
 <span class="c">// at tool-call time — always fresh, cached until just before expiry</span>
 <span class="k">const</span> token = <span class="k">await</span> nominee.<span class="fn">token</span>({ user: <span class="s">'alice'</span>, connection: <span class="s">'github'</span> })</code></pre>
+          <pre data-panel="ai" hidden><code><span class="k">import</span> { nomineeTool } <span class="k">from</span> <span class="s">'nominee-ai'</span>
+<span class="k">import</span> { z } <span class="k">from</span> <span class="s">'zod'</span>
+
+<span class="k">const</span> closeIssue = <span class="fn">nomineeTool</span>({
+  nominee, user: <span class="s">'alice'</span>,
+  connection: <span class="s">'github'</span>,   <span class="c">// fresh token injected into execute()</span>
+  approval: <span class="t">true</span>,         <span class="c">// pause for human approval first</span>
+  description: <span class="s">'Close a GitHub issue'</span>,
+  inputSchema: z.<span class="fn">object</span>({ repo: z.<span class="fn">string</span>(), issue: z.<span class="fn">number</span>() }),
+  <span class="k">async</span> <span class="fn">execute</span>({ repo, issue }, { token }) {
+    <span class="c">// `token` is fresh, auto-refreshed by nominee</span>
+  },
+})</code></pre>
+          <pre data-panel="auth0" hidden><code><span class="k">import</span> { Nominee } <span class="k">from</span> <span class="s">'nominee'</span>
+<span class="k">import</span> { Auth0 } <span class="k">from</span> <span class="s">'nominee-auth0'</span>
+
+<span class="c">// same API — swap the strategy for managed Token Vault + CIBA</span>
+<span class="k">const</span> nominee = <span class="k">new</span> <span class="t">Nominee</span>({
+  strategy: <span class="fn">Auth0</span>({
+    domain: process.env.AUTH0_DOMAIN!,
+    clientId: process.env.AUTH0_CLIENT_ID!,
+    clientSecret: process.env.AUTH0_CLIENT_SECRET!,
+    subjectToken: ({ user }) => store.<span class="fn">getRefreshToken</span>(user),
+    ciba: { loginHint: (user) => store.<span class="fn">getSub</span>(user) }, <span class="c">// phone approval</span>
+  }),
+})</code></pre>
         </div>
+      </section>
+
+      <section class="section how" id="how">
+        <div class="section-heading narrow">
+          <p class="eyebrow">How it works</p>
+          <h2>A letter of authority — issued, used, revocable.</h2>
+          <p>
+            The user is the principal. Your agent is the nominee, authorized to act
+            on their behalf within a scope. nominee fetches a fresh token at the
+            moment of each call, gates the risky ones, and logs the chain.
+          </p>
+        </div>
+        <aside class="credential" aria-label="How a delegated token flows">
+          <span class="cred-corner tl"></span><span class="cred-corner tr"></span>
+          <span class="cred-corner bl"></span><span class="cred-corner br"></span>
+          <div class="cred-head">
+            <span class="cred-label">Letter of authority</span>
+            <span class="cred-id">No. 2026</span>
+          </div>
+          <div class="chain" role="img" aria-label="you to agent to service">
+            <div class="chain-node"><span>you</span><small>principal</small></div>
+            <div class="chain-link"><span class="dot"></span></div>
+            <div class="chain-node mid"><span>agent</span><small>nominee</small></div>
+            <div class="chain-link"><span class="dot"></span></div>
+            <div class="chain-node"><span>github</span><small>service</small></div>
+          </div>
+          <div class="token-row">
+            <div class="token-key">access token</div>
+            <div class="token-bar"><span class="token-fill"></span></div>
+            <div class="token-state">fresh · auto-refreshed</div>
+          </div>
+          <svg class="cred-seal" viewBox="0 0 120 120" aria-hidden="true">
+            <g fill="none" stroke="currentColor" stroke-width="0.8" stroke-opacity="0.5">
+              <ellipse cx="60" cy="60" rx="48" ry="15" transform="rotate(0 60 60)" />
+              <ellipse cx="60" cy="60" rx="48" ry="15" transform="rotate(45 60 60)" />
+              <ellipse cx="60" cy="60" rx="48" ry="15" transform="rotate(90 60 60)" />
+              <ellipse cx="60" cy="60" rx="48" ry="15" transform="rotate(135 60 60)" />
+            </g>
+            <circle cx="60" cy="60" r="50" fill="none" stroke="currentColor" stroke-opacity="0.7" />
+            <circle cx="60" cy="60" r="36" fill="none" stroke="currentColor" stroke-opacity="0.4" />
+            <text x="60" y="74" text-anchor="middle" font-family="'Schibsted Grotesk',sans-serif" font-size="42" font-weight="600" fill="currentColor">n</text>
+          </svg>
+        </aside>
+      </section>
+
+      <section class="section" id="compare">
+        <div class="section-heading">
+          <p class="eyebrow">Why nominee</p>
+          <h2>The part that's actually hard, done for you.</h2>
+          <p>Token freshness across long runs, human approval, and audit — in one provider-neutral layer.</p>
+        </div>
+        <div class="compare-wrap">
+          <table class="compare">
+            <thead>
+              <tr>
+                <th scope="col">Capability</th>
+                <th scope="col" class="hi">nominee</th>
+                <th scope="col">DIY token refresh</th>
+                <th scope="col">Vercel Connect</th>
+                <th scope="col">AI SDK approvals</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row">Fresh token at call time</th><td class="hi y">Built in</td><td class="n">You build it</td><td class="y">Vercel only</td><td class="x">—</td></tr>
+              <tr><th scope="row">Provider-neutral</th><td class="hi y">Any provider</td><td class="y">Yours</td><td class="x">Vercel</td><td class="x">n/a</td></tr>
+              <tr><th scope="row">Human-in-the-loop approval</th><td class="hi y">Built in</td><td class="x">—</td><td class="x">—</td><td class="y">Yes</td></tr>
+              <tr><th scope="row">Audit chain (user→agent→tool)</th><td class="hi y">Built in</td><td class="x">—</td><td class="n">Partial</td><td class="x">—</td></tr>
+              <tr><th scope="row">No signup · zero-dep core</th><td class="hi y">Yes</td><td class="y">Yes</td><td class="x">—</td><td class="y">Yes</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="compare-note">
+          AI SDK v6 added approval primitives — great. nominee is orthogonal: it adds the
+          <em>token lifecycle</em>, the <em>provider-neutral</em> strategy layer, and a
+          <em>cross-framework audit</em> the same way in every runtime.
+        </p>
       </section>
 
       <section class="section" id="packages">
@@ -188,6 +301,25 @@
           <div class="ac-foot">user → triage-bot → github · logged to audit</div>
         </div>
       </section>
+
+      <section class="cta-band">
+        <div class="cta-inner">
+          <h2>Give your agent a nominee.</h2>
+          <p>Open source, MIT, zero-dependency core. Works the moment you install it.</p>
+          <div class="cta-row">
+            <button class="copy" data-copy="npm i nominee" aria-label="Copy install command">
+              <span class="prompt">›</span><span class="cmd">npm i nominee</span><span class="copy-hint">copy</span>
+            </button>
+            <a class="star-cta" href="https://github.com/bharath31/nominee">★ Star on GitHub</a>
+          </div>
+          <div class="badges" aria-label="project stats">
+            <img src="https://img.shields.io/github/stars/bharath31/nominee?style=flat-square&colorA=0a1020&colorB=d9a441&label=stars" alt="GitHub stars" loading="lazy" />
+            <img src="https://img.shields.io/npm/v/nominee?style=flat-square&colorA=0a1020&colorB=d9a441&label=version" alt="npm version" loading="lazy" />
+            <img src="https://img.shields.io/npm/dm/nominee?style=flat-square&colorA=0a1020&colorB=7e8ba6&label=downloads" alt="npm downloads" loading="lazy" />
+            <img src="https://img.shields.io/npm/l/nominee?style=flat-square&colorA=0a1020&colorB=7e8ba6&label=license" alt="license" loading="lazy" />
+          </div>
+        </div>
+      </section>
     </main>
 
     <footer>
@@ -207,23 +339,41 @@
         <a href="https://github.com/bharath31/nominee">GitHub</a>
         <a href="/docs/">Docs</a>
         <a href="https://www.npmjs.com/package/nominee">npm</a>
+        <a href="https://github.com/bharath31/nominee/blob/main/SECURITY.md">Security</a>
         <span>MIT</span>
       </div>
     </footer>
 
     <script>
+      // copy buttons (plain + code-card)
+      function flash(btn, hintSel) {
+        const hint = hintSel ? btn.querySelector(hintSel) : btn
+        const prev = hint.textContent
+        hint.textContent = 'copied ✓'
+        btn.classList.add('copied')
+        setTimeout(() => { hint.textContent = prev; btn.classList.remove('copied') }, 1400)
+      }
       for (const btn of document.querySelectorAll('.copy')) {
         btn.addEventListener('click', async () => {
-          try {
-            await navigator.clipboard.writeText(btn.dataset.copy)
-            btn.classList.add('copied')
-            const hint = btn.querySelector('.copy-hint')
-            const prev = hint.textContent
-            hint.textContent = 'copied ✓'
-            setTimeout(() => { hint.textContent = prev; btn.classList.remove('copied') }, 1400)
-          } catch {}
+          try { await navigator.clipboard.writeText(btn.dataset.copy); flash(btn, '.copy-hint') } catch {}
+        })
+      }
+      // code tabs + per-card copy
+      for (const card of document.querySelectorAll('[data-tabs]')) {
+        const tabs = card.querySelectorAll('.tab')
+        const panels = card.querySelectorAll('[data-panel]')
+        const copyBtn = card.querySelector('.code-copy')
+        const activePanel = () => card.querySelector('[data-panel]:not([hidden])')
+        tabs.forEach((tab) => tab.addEventListener('click', () => {
+          tabs.forEach((t) => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false') })
+          tab.classList.add('active'); tab.setAttribute('aria-selected', 'true')
+          panels.forEach((p) => { p.hidden = p.dataset.panel !== tab.dataset.tab })
+        }))
+        if (copyBtn) copyBtn.addEventListener('click', async () => {
+          try { await navigator.clipboard.writeText(activePanel().innerText.trim()); flash(copyBtn) } catch {}
         })
       }
     </script>
+    <script src="/assets/demo.js" defer></script>
   </body>
 </html>

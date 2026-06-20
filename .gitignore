@@ -11,3 +11,5 @@ INTERNAL_NOTES.md
 PROGRESS.md
 AGENTS.local.md
 PROGRESS.local.md
+*.local.md
+launch/

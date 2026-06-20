@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Not found — nominee</title>
+    <meta name="robots" content="noindex" />
+    <meta name="theme-color" content="#0A1020" />
+    <link rel="icon" href="/assets/icon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      .nf { min-height: 100vh; display: grid; place-items: center; text-align: center; padding: 24px; position: relative; z-index: 2; }
+      .nf .seal { width: 96px; height: 96px; color: var(--seal); opacity: 0.8; margin-bottom: 28px; }
+      .nf .code { font-family: var(--mono); color: var(--seal); letter-spacing: 0.3em; font-size: 13px; text-transform: uppercase; }
+      .nf h1 { font-size: clamp(32px, 6vw, 52px); letter-spacing: -0.03em; margin: 14px 0 10px; }
+      .nf p { color: var(--muted); max-width: 30em; margin: 0 auto 28px; }
+      .nf .links { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; font-family: var(--mono); font-size: 15px; }
+      .nf .links a { color: var(--paper-soft); border-bottom: 1px solid var(--hairline); padding-bottom: 2px; }
+      .nf .links a:hover { color: var(--seal); border-color: var(--seal); }
+    </style>
+  </head>
+  <body>
+    <div class="frame" aria-hidden="true"></div>
+    <main class="nf">
+      <div>
+        <svg class="seal" viewBox="0 0 120 120" aria-hidden="true">
+          <g fill="none" stroke="currentColor" stroke-width="0.9" stroke-opacity="0.5">
+            <ellipse cx="60" cy="60" rx="48" ry="15" transform="rotate(0 60 60)" />
+            <ellipse cx="60" cy="60" rx="48" ry="15" transform="rotate(45 60 60)" />
+            <ellipse cx="60" cy="60" rx="48" ry="15" transform="rotate(90 60 60)" />
+            <ellipse cx="60" cy="60" rx="48" ry="15" transform="rotate(135 60 60)" />
+          </g>
+          <circle cx="60" cy="60" r="50" fill="none" stroke="currentColor" stroke-opacity="0.7" />
+          <text x="60" y="74" text-anchor="middle" font-family="'Schibsted Grotesk',sans-serif" font-size="42" font-weight="600" fill="currentColor">n</text>
+        </svg>
+        <p class="code">401 · no authority here</p>
+        <h1>This page isn't authorized.</h1>
+        <p>The link you followed doesn't exist — or its token expired. (nominee would've refreshed it.)</p>
+        <div class="links">
+          <a href="/">Home</a>
+          <a href="/docs/">Docs</a>
+          <a href="https://github.com/bharath31/nominee">GitHub</a>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
