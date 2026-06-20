@@ -3,157 +3,247 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>nominee docs - fresh tokens for AI agent tools</title>
+    <title>Docs — nominee</title>
     <meta
       name="description"
-      content="Install nominee, fetch fresh tokens at tool-call time, add human approval gates, and wire nominee into AI SDK or Eve tools."
+      content="nominee docs: install, strategies, human approval, framework adapters, the core API, errors, audit events, and security."
     />
-    <meta name="theme-color" content="#07080c" />
+    <meta name="theme-color" content="#0A1020" />
     <link rel="icon" href="/assets/icon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
+    <div class="frame" aria-hidden="true"></div>
+
     <header class="site-header">
       <a class="brand" href="/" aria-label="nominee home">
-        <span class="brand-mark" aria-hidden="true"></span>
+        <svg class="brand-seal" viewBox="0 0 40 40" aria-hidden="true">
+          <g fill="none" stroke="currentColor" stroke-opacity="0.9" stroke-width="1">
+            <circle cx="20" cy="20" r="15" /><circle cx="20" cy="20" r="11" stroke-opacity="0.5" />
+            <ellipse cx="20" cy="20" rx="15" ry="5" stroke-opacity="0.5" />
+            <ellipse cx="20" cy="20" rx="15" ry="5" stroke-opacity="0.5" transform="rotate(60 20 20)" />
+            <ellipse cx="20" cy="20" rx="15" ry="5" stroke-opacity="0.5" transform="rotate(120 20 20)" />
+          </g>
+        </svg>
         <span>nominee</span>
       </a>
-      <nav aria-label="Primary navigation">
+      <nav aria-label="Primary">
         <a href="/">Home</a>
-        <a href="#quickstart">Quickstart</a>
-        <a href="#adapters">Adapters</a>
-        <a href="https://github.com/bharath31/nominee">GitHub</a>
+        <a href="/#compare">Why nominee</a>
+        <a href="/#packages">Packages</a>
+        <a class="nav-cta" href="https://github.com/bharath31/nominee">GitHub ↗</a>
       </nav>
     </header>
 
-    <main class="docs-layout">
-      <aside class="docs-nav" aria-label="Documentation navigation">
+    <div class="docs-wrap">
+      <aside class="docs-side" aria-label="Docs navigation">
+        <span class="grp">Start</span>
         <a href="#install">Install</a>
         <a href="#quickstart">Quickstart</a>
         <a href="#strategies">Strategies</a>
-        <a href="#approval">Approval</a>
-        <a href="#adapters">Adapters</a>
-        <a href="#api">API</a>
+        <span class="grp">Use</span>
+        <a href="#approval">Human approval</a>
+        <a href="#adapters">Framework adapters</a>
+        <a href="#auth0">Auth0 (optional)</a>
+        <span class="grp">Reference</span>
+        <a href="#api">Core API</a>
+        <a href="#errors">Errors</a>
+        <a href="#audit">Audit events</a>
+        <a href="#security">Security</a>
       </aside>
 
-      <article class="docs">
-        <header class="docs-hero">
-          <p class="eyebrow">Documentation</p>
-          <h1>Build agent tools that never run on stale credentials.</h1>
-          <p class="lede">
-            nominee sits between your agent framework and your user’s third-party
-            accounts. Ask for a token at execution time; nominee handles caching,
-            refresh, approval, and audit events.
-          </p>
-        </header>
+      <article class="docs-main">
+        <h1>Documentation</h1>
+        <p class="lede">
+          nominee sits between your agent and your users' third-party accounts. Ask
+          for a token at execution time; nominee handles caching, refresh, approval,
+          and audit.
+        </p>
 
         <section id="install" class="doc-section">
           <h2>Install</h2>
           <pre><code>npm i nominee</code></pre>
           <p>
-            The core package has zero runtime dependencies. Start with a plain
-            token resolver, then add adapters or managed strategies when you need
-            them.
+            The core package has <strong>zero runtime dependencies</strong>. Add an
+            adapter (<code>nominee-ai</code>, <code>nominee-eve</code>) or a managed
+            strategy (<code>nominee-auth0</code>) only when you need it.
           </p>
         </section>
 
         <section id="quickstart" class="doc-section">
           <h2>Quickstart</h2>
-          <pre><code>import { Nominee, tokens } from 'nominee'
+          <p>The whole setup is a function that returns a token. No provider, no signup.</p>
+          <pre><code>import { Nominee } from 'nominee'
 
 const nominee = new Nominee({
-  strategy: tokens(async ({ user, connection }) =>
-    db.getFreshToken(user, connection)
-  ),
-  onAudit: (event) => auditDb.insert(event),
-  agent: 'triage-bot',
+  // bring tokens you already have — env var, DB, OAuth refresh
+  strategy: ({ connection }) => process.env[`${connection.toUpperCase()}_TOKEN`]!,
+  onAudit: (event) => auditDb.insert(event), // optional
+  agent: 'triage-bot',                       // optional, recorded in the chain
 })
 
-const token = await nominee.token({
-  user: 'alice',
-  connection: 'github',
-})</code></pre>
+// at the moment the tool runs — always fresh, cached until just before expiry
+const token = await nominee.token({ user: 'alice', connection: 'github' })</code></pre>
           <p>
-            Do not store the returned access token in your own agent state. Call
-            <code>nominee.token()</code> at the moment the tool runs.
+            <strong>Rule of thumb:</strong> never store the returned token in your own
+            agent state. Call <code>nominee.token()</code> at the moment of the call —
+            that's what survives long-running and durable execution.
           </p>
         </section>
 
         <section id="strategies" class="doc-section">
           <h2>Strategies</h2>
-          <div class="docs-grid">
-            <div>
-              <h3>tokens(fn)</h3>
-              <p>Wrap an env var, database lookup, or any function that returns a token.</p>
-            </div>
-            <div>
-              <h3>OAuth2()</h3>
-              <p>Use a generic refresh-token flow without adding provider dependencies.</p>
-            </div>
-            <div>
-              <h3>Memory()</h3>
-              <p>Seed tokens in memory for development, examples, and tests.</p>
-            </div>
-            <div>
-              <h3>Auth0()</h3>
-              <p>Optional managed strategy for Token Vault and CIBA approval flows.</p>
-            </div>
-          </div>
+          <p>A strategy tells nominee how to get a token. Pass one to <code>new Nominee({ strategy })</code>. A plain function is the simplest strategy.</p>
+          <table class="api-table">
+            <thead><tr><th>Strategy</th><th>Use it for</th></tr></thead>
+            <tbody>
+              <tr><td><code>(params) =&gt; token</code></td><td>The default. A function returning a string or <code>{ token, expiresAt?, scopes? }</code>.</td></tr>
+              <tr><td><code>tokens(fn)</code></td><td>The same, but named — wrap an env var or DB lookup.</td></tr>
+              <tr><td><code>OAuth2({ connections })</code></td><td>Generic refresh-token flow. Zero deps. Bring your stored refresh tokens.</td></tr>
+              <tr><td><code>Memory({ tokens })</code></td><td>Seed tokens in memory for dev, examples, and tests.</td></tr>
+              <tr><td><code>Auth0({ ... })</code></td><td>Optional managed strategy — Token Vault + CIBA. From <code>nominee-auth0</code>.</td></tr>
+            </tbody>
+          </table>
+          <p>Implementing your own is one method, <code>getToken()</code> — see <a href="https://github.com/bharath31/nominee/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>.</p>
         </section>
 
         <section id="approval" class="doc-section">
           <h2>Human approval</h2>
-          <pre><code>await nominee.approve({
-  user: 'alice',
-  action: 'repo.delete',
-  detail: 'Delete repository: alice/old-project',
-})
-
-nominee.resolveApproval(approvalId, 'approved')</code></pre>
+          <p>Gate sensitive actions. <code>approve()</code> blocks until a decision and throws <code>ApprovalDeniedError</code> if denied or expired.</p>
+          <pre><code>try {
+  await nominee.approve({
+    user: 'alice',
+    action: 'repo.delete',
+    detail: { repo: 'alice/old-project' },
+    timeoutMs: 5 * 60_000, // optional; default waits indefinitely
+  })
+  // approved — proceed
+} catch (err) {
+  // ApprovalDeniedError: denied or expired
+}</code></pre>
           <p>
-            If the active strategy implements native approval, nominee delegates
-            to it. Otherwise the built-in approval engine pauses until your
-            webhook resolves the request.
+            If the strategy implements native approval (e.g. Auth0 CIBA), nominee
+            delegates to it. Otherwise the built-in engine pauses until your webhook
+            resolves it:
           </p>
+          <pre><code>// in your Nominee config:
+onApprovalRequest: (req) => notifyUser(req), // req.id, req.user, req.action, req.detail
+
+// later, from your approval webhook/handler:
+nominee.resolveApproval(req.id, 'approved') // or 'denied'</code></pre>
         </section>
 
         <section id="adapters" class="doc-section">
           <h2>Framework adapters</h2>
-          <pre><code>npm i nominee nominee-ai</code></pre>
-          <pre><code>import { nomineeTool } from 'nominee-ai'
+          <p>Adapters wrap a tool so it gets a fresh token and an approval gate automatically. Both expose <code>nomineeTool()</code> and <code>withNominee()</code>.</p>
+          <pre><code>import { nomineeTool } from 'nominee-ai' // or 'nominee-eve'
 import { z } from 'zod'
 
 const starRepo = nomineeTool({
   nominee,
-  user: 'alice',
-  connection: 'github',
+  user: 'alice',          // string, or a function of the call context
+  connection: 'github',   // inject a fresh token into execute()
+  approval: true,         // pause for human approval first (optional)
+  action: 'github.star',  // name used in the approval prompt + audit
   description: 'Star a GitHub repository',
   inputSchema: z.object({ repo: z.string() }),
-  execute: async ({ repo }, ctx) => {
+  async execute({ repo }, { token, user }) {
     await fetch(`https://api.github.com/user/starred/${repo}`, {
       method: 'PUT',
-      headers: { Authorization: `Bearer ${ctx.token}` },
+      headers: { Authorization: `Bearer ${token}` },
     })
     return `Starred ${repo}`
   },
 })</code></pre>
           <p>
-            Use <code>nominee-ai</code> for Vercel AI SDK and Cloudflare Agents.
-            Use <code>nominee-eve</code> for Vercel Eve.
+            <code>nominee-ai</code> targets the Vercel AI SDK (and Cloudflare Agents,
+            which use it). <code>nominee-eve</code> targets Vercel Eve and returns a
+            real <code>defineTool()</code>. The execute context is
+            <code>{ token?, user, ai }</code> for AI SDK and <code>{ token?, user, eve }</code> for Eve.
           </p>
+        </section>
+
+        <section id="auth0" class="doc-section">
+          <h2>Auth0 (optional managed upgrade)</h2>
+          <p>Same API — swap the strategy to get managed Token Vault tokens and CIBA phone approvals, with no change to your agent code.</p>
+          <pre><code>import { Nominee } from 'nominee'
+import { Auth0 } from 'nominee-auth0'
+
+const nominee = new Nominee({
+  strategy: Auth0({
+    domain: process.env.AUTH0_DOMAIN!,
+    clientId: process.env.AUTH0_CLIENT_ID!,
+    clientSecret: process.env.AUTH0_CLIENT_SECRET!,
+    subjectToken: ({ user }) => store.getRefreshToken(user),
+    ciba: { loginHint: (user) => store.getSub(user) }, // enables phone approval
+  }),
+})</code></pre>
         </section>
 
         <section id="api" class="doc-section">
           <h2>Core API</h2>
-          <div class="api-list">
-            <code>await nominee.token({ user, connection })</code>
-            <code>await nominee.approve({ user, action, detail })</code>
-            <code>nominee.resolveApproval(id, 'approved' | 'denied')</code>
-            <code>await nominee.can({ user, action, resource })</code>
-            <code>nominee.on((event) => auditDb.insert(event))</code>
-          </div>
+          <table class="api-table">
+            <thead><tr><th>Method</th><th>Returns / behavior</th></tr></thead>
+            <tbody>
+              <tr><td><code>token({ user, connection, scopes?, force? })</code></td><td><code>Promise&lt;string&gt;</code> — a fresh token. Cached per (user, connection) until just before expiry; <code>force: true</code> bypasses the cache.</td></tr>
+              <tr><td><code>approve({ user, action, detail?, timeoutMs? })</code></td><td><code>Promise&lt;ApprovalResult&gt;</code> — resolves on approval; throws <code>ApprovalDeniedError</code> on deny/expiry.</td></tr>
+              <tr><td><code>resolveApproval(id, 'approved' | 'denied')</code></td><td><code>boolean</code> — settle a built-in-engine approval from your webhook. Returns false for unknown ids.</td></tr>
+              <tr><td><code>can({ user, action, resource })</code></td><td><code>Promise&lt;boolean&gt;</code> — fine-grained authz. Requires a strategy that implements it (else throws).</td></tr>
+              <tr><td><code>on((event) =&gt; ...)</code></td><td><code>() =&gt; void</code> — subscribe to audit events; returns an unsubscribe function.</td></tr>
+            </tbody>
+          </table>
+          <p>Constructor options: <code>strategy</code>, <code>onApprovalRequest?</code>, <code>onAudit?</code>, <code>approvalTimeoutMs?</code>, <code>expiryLeewayMs?</code> (default 60s), <code>agent?</code>.</p>
+        </section>
+
+        <section id="errors" class="doc-section">
+          <h2>Errors</h2>
+          <ul>
+            <li><code>ApprovalDeniedError</code> — thrown by <code>approve()</code> (and adapter tools with <code>approval: true</code>) when a request is denied or expires. Carries <code>.result</code>.</li>
+            <li>Strategy errors propagate from <code>token()</code> — e.g. a refresh failure or an unknown connection. A <code>token.error</code> audit event is emitted first.</li>
+            <li><code>can()</code> throws if the active strategy doesn't implement authorization.</li>
+          </ul>
+        </section>
+
+        <section id="audit" class="doc-section">
+          <h2>Audit events</h2>
+          <p>Every privileged op emits an event to <code>onAudit</code> / <code>on()</code>. Event <code>type</code> is one of:</p>
+          <p><code>token.issued</code> · <code>token.cached</code> · <code>token.error</code> · <code>token.exchanged</code> · <code>approval.requested</code> · <code>approval.resolved</code> · <code>authz.checked</code></p>
+          <p>Each event includes <code>{ type, user, agent?, connection?, action?, resource?, decision?, chain?, at, detail? }</code>. <code>chain</code> is the identity chain (e.g. <code>['triage-bot']</code>), <code>at</code> is epoch ms.</p>
+        </section>
+
+        <section id="security" class="doc-section">
+          <h2>Security</h2>
+          <ul>
+            <li><strong>Never hold tokens.</strong> Call <code>token()</code> at the moment of use. nominee caches in memory only and never persists third-party tokens.</li>
+            <li><strong>Gate the irreversible.</strong> Require <code>approval</code> for deletes, payments, outbound mail, and anything you couldn't easily undo.</li>
+            <li><strong>Keep the audit stream.</strong> Pipe <code>onAudit</code> to durable storage so you can always answer "who authorized this?".</li>
+            <li>Report vulnerabilities privately — see <a href="https://github.com/bharath31/nominee/blob/main/SECURITY.md">SECURITY.md</a>.</li>
+          </ul>
         </section>
       </article>
-    </main>
+    </div>
+
+    <script>
+      // add a copy button to every code block
+      for (const pre of document.querySelectorAll('.doc-section pre')) {
+        const btn = document.createElement('button')
+        btn.className = 'pre-copy'
+        btn.textContent = 'copy'
+        btn.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(pre.innerText.trim())
+            btn.textContent = 'copied ✓'
+            setTimeout(() => { btn.textContent = 'copy' }, 1400)
+          } catch {}
+        })
+        pre.appendChild(btn)
+      }
+    </script>
   </body>
 </html>
