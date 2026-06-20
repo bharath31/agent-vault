@@ -26,15 +26,15 @@ importers:
 
   examples/eve-agent:
     dependencies:
-      '@nominee/eve':
-        specifier: workspace:*
-        version: link:../../packages/eve
       eve:
         specifier: ^0.11.7
         version: 0.11.7(@opentelemetry/api@1.9.1)(ai@6.0.208(zod@4.4.3))(chokidar@4.0.3)(dotenv@17.4.2)(rollup@4.62.2)(vite@5.4.21(@types/node@26.0.0))
       nominee:
         specifier: workspace:*
         version: link:../../packages/core
+      nominee-eve:
+        specifier: workspace:*
+        version: link:../../packages/eve
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -70,9 +70,6 @@ importers:
       '@ai-sdk/openai':
         specifier: ^3.0.73
         version: 3.0.73(zod@4.4.3)
-      '@nominee/ai':
-        specifier: workspace:*
-        version: link:../../packages/ai
       ai:
         specifier: ^6.0.208
         version: 6.0.208(zod@4.4.3)
@@ -82,6 +79,9 @@ importers:
       nominee:
         specifier: workspace:*
         version: link:../../packages/core
+      nominee-ai:
+        specifier: workspace:*
+        version: link:../../packages/ai
       zod:
         specifier: ^4.4.3
         version: 4.4.3

@@ -48,7 +48,7 @@ export interface NomineeAiToolConfig<TSchema extends z.ZodType, TOutput> {
  * the same nominee instance you'd use in Eve or standalone.
  *
  * ```ts
- * import { nomineeTool } from '@nominee/ai'
+ * import { nomineeTool } from 'nominee-ai'
  * import { z } from 'zod'
  *
  * const closeIssue = nomineeTool({
@@ -111,7 +111,7 @@ export function withNominee(nominee: Nominee, defaults?: { user?: UserResolver }
     const user = config.user ?? defaults?.user
     if (user === undefined) {
       throw new Error(
-        '@nominee/ai: `user` is required (pass it here or as a default to withNominee)',
+        'nominee-ai: `user` is required (pass it here or as a default to withNominee)',
       )
     }
     return nomineeTool({ ...config, nominee, user } as NomineeAiToolConfig<TSchema, TOutput>)

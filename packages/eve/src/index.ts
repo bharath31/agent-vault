@@ -61,7 +61,7 @@ async function resolveUser(user: UserResolver, ctx: ToolContext): Promise<string
  *
  * ```ts
  * // agent/tools/close_issue.ts
- * import { nomineeTool } from '@nominee/eve'
+ * import { nomineeTool } from 'nominee-eve'
  * import { z } from 'zod'
  * import { nominee } from '../../lib/nominee.js'
  *
@@ -124,7 +124,7 @@ export function withNominee(nominee: Nominee, defaults?: { user?: UserResolver }
     const user = config.user ?? defaults?.user
     if (user === undefined) {
       throw new Error(
-        '@nominee/eve: `user` is required (pass it here or as a default to withNominee)',
+        'nominee-eve: `user` is required (pass it here or as a default to withNominee)',
       )
     }
     return nomineeTool({ ...config, nominee, user } as NomineeEveToolConfig<TSchema, TOutput>)

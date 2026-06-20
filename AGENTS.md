@@ -14,7 +14,7 @@ provider-neutral layer that does this — the "Passport.js of agent auth."
 1. **Install-and-go by default.** The default path requires *no signup, no
    service*. You pass a plain function that returns a token (env var, your DB, a
    literal). nominee handles freshness/caching, human-in-the-loop approval, and
-   audit on top. Auth0 (`@nominee/auth0`) is the **optional** managed upgrade
+   audit on top. Auth0 (`nominee-auth0`) is the **optional** managed upgrade
    (Token Vault + CIBA), never required.
 2. **Core stays dependency-free.** `packages/core` has zero runtime deps. Any
    provider/runtime dependency lives in a strategy or adapter package.
@@ -29,13 +29,13 @@ long-running / durable agent execution.
 ```
 packages/
   core/    → published as `nominee`        — engine, Strategy interface, tokens()/OAuth2()/Memory(), approval engine, audit. NO provider deps.
-  ai/      → `@nominee/ai`                  — Vercel AI SDK adapter (also covers Cloudflare Agents; `agents` has ai@^6 as a peer). DUAL esm+cjs.
-  eve/     → `@nominee/eve`                 — Vercel Eve adapter. ESM-ONLY (Eve is ESM-only; defineTool brands its output so we must call it).
-  auth0/   → `@nominee/auth0`               — optional Auth0 strategy: Token Vault getToken + CIBA requestApproval. Hand-rolled HTTP, zero heavy deps.
+  ai/      → `nominee-ai`                  — Vercel AI SDK adapter (also covers Cloudflare Agents; `agents` has ai@^6 as a peer). DUAL esm+cjs.
+  eve/     → `nominee-eve`                 — Vercel Eve adapter. ESM-ONLY (Eve is ESM-only; defineTool brands its output so we must call it).
+  auth0/   → `nominee-auth0`               — optional Auth0 strategy: Token Vault getToken + CIBA requestApproval. Hand-rolled HTTP, zero heavy deps.
 examples/  → (TODO) standalone-node, vercel-ai-github, eve-agent
 ```
 
-Scoped packages publish under the `@nominee/*` npm org (must be created — see Phase 5 in PROGRESS.md). Core `nominee` is already published (placeholder `0.0.1`).
+Scoped packages publish under the `nominee-*` npm org (must be created — see Phase 5 in PROGRESS.md). Core `nominee` is already published (placeholder `0.0.1`).
 
 ## Public API (keep it tiny — DX/AX is a first principle)
 
@@ -75,7 +75,7 @@ pnpm biome check .           # lint+format check
 pnpm biome check --write .   # autofix
 ```
 
-Per-package: `pnpm --filter nominee test`, `pnpm --filter @nominee/ai build`, etc.
+Per-package: `pnpm --filter nominee test`, `pnpm --filter nominee-ai build`, etc.
 
 ## Conventions
 
@@ -99,7 +99,7 @@ Per-package: `pnpm --filter nominee test`, `pnpm --filter @nominee/ai build`, et
   purpose. Public types stay precise (`Tool<z.infer<TSchema>, TOutput>`).
 - **Eve `defineTool` brands its output and rejects raw objects** — the eve
   adapter MUST import and call `defineTool` from `eve/tools`. Eve is ESM-only, so
-  `@nominee/eve` is ESM-only too.
+  `nominee-eve` is ESM-only too.
 - **Auth0 contract is hand-rolled** from the real `@auth0/ai` source (verified):
   - Token Vault: `POST /oauth/token`, JSON body, grant
     `urn:auth0:params:oauth:grant-type:token-exchange:federated-connection-access-token`,

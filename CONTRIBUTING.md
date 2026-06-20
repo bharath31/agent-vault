@@ -6,7 +6,7 @@ The core engine (`nominee`) is entirely dependency-free. We welcome pull request
 
 ## Adding a new Strategy
 
-A strategy is a package that provides tokens and handles human approvals. Currently, we have the built-in `tokens` strategy and `@nominee/auth0`. We'd love community strategies for Clerk, Supabase, WorkOS, and others.
+A strategy is a package that provides tokens and handles human approvals. Currently, we have the built-in `tokens` strategy and `nominee-auth0`. We'd love community strategies for Clerk, Supabase, WorkOS, and others.
 
 To build a strategy, implement the `Strategy` interface from `nominee`:
 
@@ -46,7 +46,7 @@ export function MyProvider(config: MyConfig): Strategy {
 }
 ```
 
-If you are building a strategy for a major provider, you can open a PR to add it to the `@nominee/*` monorepo namespace.
+If you are building a strategy for a major provider, you can open a PR to add it to the `nominee-*` monorepo namespace.
 
 ## Local Development
 

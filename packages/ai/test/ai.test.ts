@@ -19,7 +19,7 @@ function exec(tool: { execute?: (...args: any[]) => any }, input: unknown) {
   return tool.execute(input, fakeOptions)
 }
 
-describe('@nominee/ai', () => {
+describe('nominee-ai', () => {
   it('produces an AI SDK tool with description + execute', () => {
     const tool = nomineeTool({
       nominee: makeNominee(),

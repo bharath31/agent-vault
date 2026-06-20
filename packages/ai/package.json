@@ -1,6 +1,6 @@
 {
-  "name": "@nominee/ai",
-  "version": "0.1.0",
+  "name": "nominee-ai",
+  "version": "1.0.0",
   "description": "Nominee adapter for the Vercel AI SDK — fresh tokens and human-in-the-loop approval for AI SDK tools",
   "type": "module",
   "main": "./dist/index.cjs",

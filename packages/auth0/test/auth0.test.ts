@@ -47,7 +47,7 @@ function mockAuth0(opts: {
   return { fetch, calls: () => calls }
 }
 
-describe('@nominee/auth0 — Token Vault', () => {
+describe('nominee-auth0 — Token Vault', () => {
   it('exchanges the subject token for a federated connection token', async () => {
     const { fetch, calls } = mockAuth0({
       tokenVault: { access_token: 'gh_federated', expires_in: 3600, scope: 'repo' },
@@ -103,7 +103,7 @@ describe('@nominee/auth0 — Token Vault', () => {
   })
 })
 
-describe('@nominee/auth0 — CIBA approval', () => {
+describe('nominee-auth0 — CIBA approval', () => {
   it('returns approved after polling through authorization_pending', async () => {
     const { fetch } = mockAuth0({
       bcAuthorize: { auth_req_id: 'req_1', interval: 0, expires_in: 300 },

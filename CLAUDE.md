@@ -14,9 +14,9 @@ Live build status and the remaining work checklist are in
 - **What it is:** provider-neutral identity + token delegation for AI agents.
   Fresh third-party tokens at call time, human-in-the-loop approval, audit.
 - **Default path = no signup:** `new Nominee({ strategy: ({connection}) => process.env[...] })`.
-  Auth0 (`@nominee/auth0`) is the optional managed upgrade (Token Vault + CIBA).
-- **Packages:** `nominee` (core, zero deps) · `@nominee/ai` (Vercel AI SDK, also
-  Cloudflare) · `@nominee/eve` (Vercel Eve) · `@nominee/auth0` (optional).
+  Auth0 (`nominee-auth0`) is the optional managed upgrade (Token Vault + CIBA).
+- **Packages:** `nominee` (core, zero deps) · `nominee-ai` (Vercel AI SDK, also
+  Cloudflare) · `nominee-eve` (Vercel Eve) · `nominee-auth0` (optional).
 
 ## Before you commit
 

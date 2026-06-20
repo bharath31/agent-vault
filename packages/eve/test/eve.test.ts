@@ -13,7 +13,7 @@ function makeNominee(over: Partial<ConstructorParameters<typeof Nominee>[0]> = {
   })
 }
 
-describe('@nominee/eve', () => {
+describe('nominee-eve', () => {
   it('produces a tool with an execute function', () => {
     const tool = nomineeTool({
       nominee: makeNominee(),

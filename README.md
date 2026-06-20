@@ -39,9 +39,9 @@ Nominee plugs directly into your AI framework's tool system.
 
 | Adapter | Package | Status |
 |---|---|---|
-| **Vercel AI SDK** | `@nominee/ai` | ✅ Available |
-| **Vercel Eve** | `@nominee/eve` | ✅ Available |
-| **Cloudflare Agents** | `@nominee/ai` | ✅ Available |
+| **Vercel AI SDK** | `nominee-ai` | ✅ Available |
+| **Vercel Eve** | `nominee-eve` | ✅ Available |
+| **Cloudflare Agents** | `nominee-ai` | ✅ Available |
 | **Standalone Node** | `nominee` | ✅ Available |
 
 ## Human-in-the-Loop Approvals
@@ -69,14 +69,14 @@ Yes, AI SDK v6 introduced tool approvals. But Nominee brings three crucial addit
 
 ## Upgrading to Auth0 (Optional)
 
-If you don't want to manage refresh tokens in your database, you can plug in `@nominee/auth0`. This strategy uses Auth0's Token Vault and CIBA (Client-Initiated Backchannel Authentication) to manage tokens and push approvals directly to the user's phone.
+If you don't want to manage refresh tokens in your database, you can plug in `nominee-auth0`. This strategy uses Auth0's Token Vault and CIBA (Client-Initiated Backchannel Authentication) to manage tokens and push approvals directly to the user's phone.
 
 ```bash
-npm install nominee @nominee/auth0
+npm install nominee nominee-auth0
 ```
 
 ```ts
-import { Auth0 } from '@nominee/auth0'
+import { Auth0 } from 'nominee-auth0'
 
 const nominee = new Nominee({
   strategy: Auth0({

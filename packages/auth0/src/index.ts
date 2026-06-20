@@ -77,11 +77,11 @@ const sleep = (ms: number) =>
  * - `requestApproval` runs **CIBA** human-in-the-loop: the user approves on
  *   their phone, then the agent resumes.
  *
- * Works with any nominee adapter (`@nominee/ai`, `@nominee/eve`) or standalone.
+ * Works with any nominee adapter (`nominee-ai`, `nominee-eve`) or standalone.
  *
  * ```ts
  * import { Nominee } from 'nominee'
- * import { Auth0 } from '@nominee/auth0'
+ * import { Auth0 } from 'nominee-auth0'
  *
  * const nominee = new Nominee({
  *   strategy: Auth0({
@@ -99,7 +99,7 @@ const sleep = (ms: number) =>
 export function Auth0(options: Auth0Options): Strategy {
   const doFetch = options.fetch ?? globalThis.fetch
   if (typeof doFetch !== 'function') {
-    throw new Error('@nominee/auth0: no global fetch available; pass options.fetch')
+    throw new Error('nominee-auth0: no global fetch available; pass options.fetch')
   }
   const base = `https://${options.domain}`
   const subjectTokenType =
@@ -127,7 +127,7 @@ export function Auth0(options: Auth0Options): Strategy {
     if (!res.ok) {
       const text = await res.text().catch(() => '')
       throw new Error(
-        `@nominee/auth0: Token Vault exchange for connection "${params.connection}" failed (${res.status}) ${text}`.trim(),
+        `nominee-auth0: Token Vault exchange for connection "${params.connection}" failed (${res.status}) ${text}`.trim(),
       )
     }
 
@@ -142,7 +142,7 @@ export function Auth0(options: Auth0Options): Strategy {
     const ciba = options.ciba
     if (!ciba) {
       throw new Error(
-        '@nominee/auth0: approval requested but CIBA is not configured. Add `ciba` to Auth0() options, or remove `approval` from the tool.',
+        'nominee-auth0: approval requested but CIBA is not configured. Add `ciba` to Auth0() options, or remove `approval` from the tool.',
       )
     }
 
@@ -168,7 +168,7 @@ export function Auth0(options: Auth0Options): Strategy {
     })
     if (!authRes.ok) {
       const text = await authRes.text().catch(() => '')
-      throw new Error(`@nominee/auth0: CIBA bc-authorize failed (${authRes.status}) ${text}`.trim())
+      throw new Error(`nominee-auth0: CIBA bc-authorize failed (${authRes.status}) ${text}`.trim())
     }
     const auth = (await authRes.json()) as BcAuthorizeResponse
     const id = auth.auth_req_id
@@ -201,7 +201,7 @@ export function Auth0(options: Auth0Options): Strategy {
       if (err.error === 'access_denied') return { id, decision: 'denied' }
       if (err.error === 'expired_token') return { id, decision: 'expired' }
       throw new Error(
-        `@nominee/auth0: CIBA poll failed (${pollRes.status}) ${err.error ?? ''}`.trim(),
+        `nominee-auth0: CIBA poll failed (${pollRes.status}) ${err.error ?? ''}`.trim(),
       )
     }
 

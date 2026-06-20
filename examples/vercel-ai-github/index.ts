@@ -1,7 +1,7 @@
 import { openai } from '@ai-sdk/openai'
-import { nomineeTool } from '@nominee/ai'
 import { generateText } from 'ai'
 import { Nominee, tokens } from 'nominee'
+import { nomineeTool } from 'nominee-ai'
 import { z } from 'zod'
 import 'dotenv/config'
 

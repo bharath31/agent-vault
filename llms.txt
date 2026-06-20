@@ -5,10 +5,10 @@ Identity and token delegation for AI agents.
 Nominee provides a framework-agnostic way to handle dynamic authentication and human-in-the-loop approvals for AI agents.
 
 Key concepts:
-- **Strategy**: Brokers tokens. `tokens()` is the simplest, wrapping a custom async function. `@nominee/auth0` is an advanced optional strategy that uses Auth0's Token Vault and CIBA.
+- **Strategy**: Brokers tokens. `tokens()` is the simplest, wrapping a custom async function. `nominee-auth0` is an advanced optional strategy that uses Auth0's Token Vault and CIBA.
 - **Tokens**: Agents don't capture tokens early. They request `nominee.token({ user, connection })` right before executing a tool. Nominee caches the token and refreshes it transparently.
 - **Approval**: `nominee.approve({ user, action })` blocks execution until a human approves the action (via a webhook calling `nominee.resolveApproval(id, 'approved')` or natively via a Strategy like Auth0 CIBA).
-- **Adapters**: `@nominee/ai` (Vercel AI SDK), `@nominee/eve` (Vercel Eve). They provide `nomineeTool` wrappers that automatically inject tokens into the context and gate execution on approvals.
+- **Adapters**: `nominee-ai` (Vercel AI SDK), `nominee-eve` (Vercel Eve). They provide `nomineeTool` wrappers that automatically inject tokens into the context and gate execution on approvals.
 
 ## Quick Start
 ```typescript

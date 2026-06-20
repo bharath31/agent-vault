@@ -18,14 +18,14 @@ pnpm workspace, tsconfig.base, biome, changesets, GH Actions CI+release, native 
 **Install-and-go default:** `new Nominee({ strategy: (params) => token })` — function strategy, no provider.
 35 tests · typecheck + biome clean · dual ESM+CJS.
 
-## Phase 3 — `@nominee/ai` (Vercel AI SDK) ✅  ← launch demo + Cloudflare coverage
+## Phase 3 — `nominee-ai` (Vercel AI SDK) ✅  ← launch demo + Cloudflare coverage
 Verified vs real `ai@6`. `nomineeTool()` + `withNominee()`. 6 tests. Dual build.
 Covers Cloudflare Agents unchanged (`agents` has `ai@^6` peer).
 
-## Phase 7 — `@nominee/eve` (Vercel Eve) ✅  ← attention driver
+## Phase 7 — `nominee-eve` (Vercel Eve) ✅  ← attention driver
 Verified vs real `eve@0.11.7` (`defineTool` from `eve/tools`, branded, ESM-only). 6 tests. ESM-only build.
 
-## Phase 2 — `@nominee/auth0` ✅  ← optional managed upgrade
+## Phase 2 — `nominee-auth0` ✅  ← optional managed upgrade
 `Auth0()` strategy: `getToken` (Token Vault federated exchange) + `requestApproval` (CIBA poll).
 Hand-rolled HTTP from verified `@auth0/ai` source; zero heavy deps. 6 tests (mocked HTTP). Dual build.
 ⚠️ **Not yet validated against a live Auth0 tenant** — do before 1.0. `can()`/`exchange()` = v0.2.
@@ -34,7 +34,7 @@ Hand-rolled HTTP from verified `@auth0/ai` source; zero heavy deps. 6 tests (moc
 - ✅ `AGENTS.md` (repo + AX guide) · ✅ `CLAUDE.md`
 - ✅ `examples/standalone-node` — Nominee with a function/OAuth2 strategy, show token refresh + approve()/resolveApproval() + audit. NO Auth0.
 - ✅ `examples/vercel-ai-github` — AI SDK agent, `nomineeTool` with `connection:'github'` + `approval:true`; prints audit chain. Sample app.
-- ✅ `examples/eve-agent` — minimal Eve `agent/tools/*.ts` using `@nominee/eve`.
+- ✅ `examples/eve-agent` — minimal Eve `agent/tools/*.ts` using `nominee-eve`.
 - ✅ `README.md` — **the compelling "why" for every agent dev.** Cold-open pain
   (auth'd at 9am, dead by 3pm / silent 401s in durable runs) → 6-line install-and-go
   quickstart (NO signup) → approval demo → audit → "Auth0 optional" → adapters table
@@ -47,7 +47,7 @@ Hand-rolled HTTP from verified `@auth0/ai` source; zero heavy deps. 6 tests (moc
 
 ## Phase 5 — Verify, version, publish ⬜
 - ⬜ `npm pack` each package; check tarball `exports`/`files`/dual outputs.
-- ⬜ Create npm **org `nominee`** (https://www.npmjs.com/org/create) for `@nominee/*`.
+- ⬜ Create npm **org `nominee`** (https://www.npmjs.com/org/create) for `nominee-*`.
       Fallback if blocked: unscoped `nominee-ai`/`nominee-eve`/`nominee-auth0` (filter risk).
 - ⬜ Auth token: user uses an **npm Automation token** (passkey-only acct can't OTP).
       `npm config set //registry.npmjs.org/:_authToken <TOKEN>` then publish. Revoke after.
@@ -57,13 +57,13 @@ Hand-rolled HTTP from verified `@auth0/ai` source; zero heavy deps. 6 tests (moc
 ---
 
 ## Adapter coverage
-Eve ✅ · Vercel AI SDK ✅ · Cloudflare Agents ✅ (via `@nominee/ai`, document it) · standalone ✅.
-Dedicated `@nominee/cloudflare` (Durable Object approval storage) = post-launch fast-follow.
+Eve ✅ · Vercel AI SDK ✅ · Cloudflare Agents ✅ (via `nominee-ai`, document it) · standalone ✅.
+Dedicated `nominee-cloudflare` (Durable Object approval storage) = post-launch fast-follow.
 
 ## Repo facts for the next agent
 - GitHub: `github.com/bharath31/nominee`, default branch `main`, currently ONE commit
   (`init`). Work below is uncommitted unless a commit was just made — `git status` first.
-- npm: `nominee@0.0.1` placeholder published. `@nominee/*` org NOT yet created.
+- npm: `nominee@0.0.1` placeholder published. `nominee-*` org NOT yet created.
 - Node 20 / pnpm 10 locally. Plan file: `~/.claude/plans/then-create-a-plan-bright-penguin.md`.
 - Read **AGENTS.md** for architecture, conventions, and gotchas (type casts, ESM-only eve, Auth0 contract).
 
