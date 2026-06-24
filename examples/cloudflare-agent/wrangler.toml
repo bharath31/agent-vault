@@ -16,5 +16,5 @@ namespace_id = "1001"
 simple = { limit = 3, period = 60 }
 
 [vars]
-FROM = "nominee demo <onboarding@resend.dev>"
+FROM = "nominee <agent@email.nominee.dev>"
 # Set the secret with:  wrangler secret put RESEND_API_KEY

@@ -1,0 +1,16 @@
+name = "nominee-agent-demo"
+main = "src/index.ts"
+compatibility_date = "2026-06-20"
+compatibility_flags = ["nodejs_compat"]
+
+# Takes over the testbed URL once deployed
+routes = [{ pattern = "nominee.dev/agent*", zone_name = "nominee.dev" }]
+
+# rate-limit the real write action: 5 stars / 60s / IP
+[[ratelimits]]
+name = "STAR_RL"
+namespace_id = "2001"
+simple = { limit = 5, period = 60 }
+
+# Secrets (set with `wrangler secret put <NAME>`):
+#   AUTH0_DOMAIN, AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET, SESSION_SECRET
