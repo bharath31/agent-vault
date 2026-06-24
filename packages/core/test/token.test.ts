@@ -67,4 +67,76 @@ describe('Nominee.token', () => {
     const n = new Nominee({ strategy: Memory() })
     await expect(n.token({ user: 'nope', connection: 'github' })).rejects.toThrow(/no token/)
   })
+
+  it('coalesces concurrent refreshes into one fetch (single-flight)', async () => {
+    let calls = 0
+    const getToken = vi.fn(async () => {
+      calls++
+      await new Promise((r) => setTimeout(r, 10))
+      return { token: `tok_${calls}`, expiresAt: Date.now() + 3_600_000 }
+    })
+    const n = new Nominee({ strategy: { name: 'x', getToken } })
+
+    const results = await Promise.all(
+      Array.from({ length: 5 }, () => n.token({ user: 'u1', connection: 'github' })),
+    )
+
+    expect(getToken).toHaveBeenCalledTimes(1)
+    expect(results).toEqual(['tok_1', 'tok_1', 'tok_1', 'tok_1', 'tok_1'])
+  })
+
+  it('force does not coalesce with an in-flight refresh', async () => {
+    let calls = 0
+    const getToken = vi.fn(async () => {
+      calls++
+      await new Promise((r) => setTimeout(r, 10))
+      return { token: `tok_${calls}`, expiresAt: Date.now() + 3_600_000 }
+    })
+    const n = new Nominee({ strategy: { name: 'x', getToken } })
+
+    await Promise.all([
+      n.token({ user: 'u1', connection: 'github' }),
+      n.token({ user: 'u1', connection: 'github', force: true }),
+    ])
+    expect(getToken).toHaveBeenCalledTimes(2)
+  })
+
+  it('invalidate() drops the cache and emits token.invalidated', async () => {
+    let n = 0
+    const getToken = vi.fn(async () => ({ token: `tok_${++n}`, expiresAt: Date.now() + 3_600_000 }))
+    const events: string[] = []
+    const nom = new Nominee({
+      strategy: { name: 'x', getToken },
+      onAudit: (e) => events.push(e.type),
+    })
+
+    await nom.token({ user: 'u1', connection: 'github' }) // tok_1, cached
+    expect(nom.invalidate('u1', 'github')).toBe(true)
+    expect(nom.invalidate('u1', 'github')).toBe(false) // already gone
+    expect(await nom.token({ user: 'u1', connection: 'github' })).toBe('tok_2') // re-resolved
+    expect(events).toContain('token.invalidated')
+    expect(getToken).toHaveBeenCalledTimes(2)
+  })
+
+  it('re-resolves after a durable resume (holds a resolver, not a token)', async () => {
+    // The strategy reads the current token from a store on every call — exactly
+    // how you wire a refresh token from durable storage.
+    const store = { access: 'tok_morning', exp: Date.now() + 3_600_000 }
+    const strategy: Strategy = {
+      name: 'store',
+      getToken: async () => ({ token: store.access, expiresAt: store.exp }),
+    }
+
+    // Morning: the agent gets a token.
+    const morning = new Nominee({ strategy })
+    expect(await morning.token({ user: 'u1', connection: 'github' })).toBe('tok_morning')
+
+    // Hours pass, the upstream token rotates, and the agent's instance was
+    // serialized away. A fresh instance resumes with the same strategy config.
+    store.access = 'tok_afternoon'
+    const afternoon = new Nominee({ strategy })
+
+    // It carries no stale captured token — it re-resolves a live one.
+    expect(await afternoon.token({ user: 'u1', connection: 'github' })).toBe('tok_afternoon')
+  })
 })

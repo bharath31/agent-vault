@@ -137,13 +137,38 @@ const starRepo = nomineeTool({
 
 ---
 
-## Auth0 Setup
+## Auth0 Setup (the honest version)
 
-1. Enable **Token Vault** in your Auth0 tenant *(Actions → Token Vault)*.
-2. Add your social connections (GitHub, Google, Slack, etc.) as federated connections.
-3. Enable **CIBA** in your Auth0 tenant for push-to-phone approvals.
+nominee removes the *runtime* token pain — one `nominee.token()` call, always fresh.
+It does **not** remove Auth0/provider *setup*: that's a one-time job with sharp edges.
+Here's what actually works, learned the hard way wiring the live GitHub demo:
 
-See the [Auth0 documentation](https://auth0.com/docs) for tenant configuration.
+1. **Enable Token Vault on the connection — via Connected Accounts.** Token Vault is now
+   driven by **Connected Accounts**; set the top-level `connected_accounts.active` on the
+   connection (the older `options.federated_connections_access_tokens` is deprecated):
+   ```bash
+   auth0 api patch "connections/<CONNECTION_ID>" --data '{"connected_accounts":{"active":true}}'
+   ```
+2. **GitHub: use a GitHub _App_ with expiring tokens — not a classic OAuth App.** Classic
+   OAuth Apps never issue refresh tokens, so Token Vault has nothing to vault (you'll get
+   `federated_connection_refresh_token_not_found`). Create a **GitHub App**, turn on
+   **"Expire user authorization tokens"**, set the callback to
+   `https://<tenant>/login/callback`, and point the connection at the App's client id/secret.
+3. **Grant the exact permission the action needs — App vs repo scope matters.** GitHub App
+   user tokens carry **account** permissions from user authorization, but **repository**
+   permissions (e.g. `metadata=read`) require the App to be **installed** on the repo.
+   Account-only actions (publish a gist, edit profile) need no installation; repo actions do.
+   A `403 "Resource not accessible by integration"` means a missing permission — read the
+   `x-accepted-github-permissions` response header to see exactly which.
+4. **Re-vault after changing permissions.** Connected Accounts caches the grant. After
+   changing what the user approved, delete the stale connected account
+   (`DELETE /me/v1/connected-accounts/{id}` via the user's My Account token) and reconnect so
+   the fresh consent is vaulted.
+5. **CIBA** for push approvals: enable it in the tenant, then set `ciba` in the strategy.
+
+Once wired, the runtime is just `await nominee.token({ user, connection })` — and you can
+swap this whole strategy for `tokens()` or `OAuth2()` without touching your agent code.
+See the [Auth0 documentation](https://auth0.com/docs) for the rest of tenant configuration.
 
 ---
 

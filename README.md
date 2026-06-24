@@ -209,6 +209,9 @@ nominee.resolveApproval(id, 'approved' | 'denied')
 // Fine-grained authorization (throws unless strategy implements it)
 await nominee.can({ user, action, resource })
 
+// Drop the cached token for a user+connection (force re-resolve next call)
+nominee.invalidate(user, connection)
+
 // Subscribe to all audit events
 const unsub = nominee.on((event) => console.log(event))
 ```
@@ -219,13 +222,16 @@ const unsub = nominee.on((event) => console.log(event))
 
 The hard part of agent auth isn't the OAuth dance — it's keeping a token *fresh across a long run*, gating the risky calls, and proving who authorized what. nominee does all three, in one provider-neutral layer.
 
-| Capability | nominee | DIY token refresh | Vercel Connect | AI SDK approvals |
-| --- | :---: | :---: | :---: | :---: |
-| Fresh token at call time | ✅ built in | you build it | Vercel only | — |
-| Provider-neutral | ✅ any provider | yours | Vercel | n/a |
-| Human-in-the-loop approval | ✅ built in | — | — | ✅ |
-| Audit chain (user→agent→tool) | ✅ built in | — | partial | — |
-| No signup · zero-dep core | ✅ | ✅ | — | ✅ |
+| Capability | nominee | AI SDK / CF Agents / LangChain | Auth0 (alone) |
+| --- | :---: | :---: | :---: |
+| Fresh token at call time | ✅ | you write it | ✅ (vendor-locked) |
+| Survives durable hibernation | ✅ | you write it | ✅ (vendor-locked) |
+| Provider-neutral (swap vendors) | ✅ | — | — |
+| Zero-signup to start | ✅ | ✅ | — |
+| Human-in-the-loop approval | ✅ | AI SDK ✅, others — | — |
+| Audit log | ✅ | — | partial |
+
+> **When you don't need nominee:** single-provider, short-lived, non-durable app → your IdP's SDK or ~20 lines is enough. nominee pays off for long-running, durable, multi-provider agents, or when you refuse lock-in.
 
 ---
 

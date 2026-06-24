@@ -14,20 +14,26 @@ interface Env {
 
 const ORIGIN = 'https://nominee.dev'
 const REDIRECT = `${ORIGIN}/agent/callback`
+const CONNECT_REDIRECT = `${ORIGIN}/agent/connect/callback`
 const COOKIE = 'nominee_sess'
+// My Account API audience + the Connected Accounts scopes needed to vault a GitHub token.
+const meAudience = (domain: string) => `https://${domain}/me/`
+const CA_SCOPES =
+  'openid profile offline_access create:me:connected_accounts read:me:connected_accounts delete:me:connected_accounts'
 
 const json = (d: unknown, s = 200) =>
   new Response(JSON.stringify(d, null, 2), {
     status: s,
     headers: { 'content-type': 'application/json' },
   })
-const cleanRepo = (s: unknown): string | null => {
-  const r = String(s ?? '')
+const cleanNote = (s: unknown): string | null => {
+  const t = String(s ?? '')
     .trim()
-    .replace(/^https?:\/\/github\.com\//i, '')
-    .replace(/\/+$/, '')
-  return /^[\w.-]+\/[\w.-]+$/.test(r) ? r : null
+    .slice(0, 280)
+  return t.length ? t : null
 }
+const gistContent = (note: string, who: string) =>
+  `# ${note}\n\n_Published to GitHub by an autonomous agent — with ${who}'s approval._\n\nAn AI agent created this gist on my behalf. It never saw my password or a stored token. At the moment it published, **nominee** fetched a fresh, short-lived GitHub token from **Auth0 Token Vault** — and only after I clicked **Approve**.\n\n— via https://nominee.dev\n`
 
 // ---- encrypted session cookie (AES-GCM via Web Crypto; no KV needed) ----
 async function aesKey(secret: string) {
@@ -60,6 +66,48 @@ interface Session {
   sub: string
   name?: string
   refreshToken: string
+  vaulted?: boolean
+  authSession?: string
+  connectState?: string
+}
+
+// Exchange the Auth0 refresh token (bound to the My Account API audience) for a
+// short-lived My Account API access token, used to drive the Connected Accounts flow.
+async function myAccountToken(env: Env, refreshToken: string): Promise<string> {
+  const res = await fetch(`https://${env.AUTH0_DOMAIN}/oauth/token`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      grant_type: 'refresh_token',
+      client_id: env.AUTH0_CLIENT_ID,
+      client_secret: env.AUTH0_CLIENT_SECRET,
+      refresh_token: refreshToken,
+      audience: meAudience(env.AUTH0_DOMAIN),
+      scope: CA_SCOPES,
+    }),
+  })
+  const j = (await res.json().catch(() => ({}))) as {
+    access_token?: string
+    error_description?: string
+    error?: string
+  }
+  if (!j.access_token)
+    throw new Error(
+      `My Account token exchange failed (${res.status}) ${j.error_description ?? j.error ?? 'no access_token'}`,
+    )
+  return j.access_token
+}
+
+// Seal the session and return a 302 that sets the cookie + redirects to `location`.
+async function setSession(env: Env, sess: Session, location: string): Promise<Response> {
+  const val = await seal(env.SESSION_SECRET, sess)
+  return new Response(null, {
+    status: 302,
+    headers: {
+      location,
+      'set-cookie': `${COOKIE}=${val}; HttpOnly; Secure; SameSite=Lax; Path=/agent; Max-Age=3600`,
+    },
+  })
 }
 
 export default {
@@ -67,19 +115,48 @@ export default {
     const url = new URL(request.url)
     const path = url.pathname.replace(/\/+$/, '') || '/agent'
 
-    // ---- 1. start login: send the user to Auth0, logging in via GitHub ----
+    // ---- 0. public demo endpoints for the homepage "long session" race ----
+    // A signup-free, short-TTL (8s) token source + a guarded resource. The site
+    // runs the REAL published `nominee` (from esm.sh) against these, so the
+    // refresh you see in the browser is genuine, not a re-enactment. Stateless:
+    // the access token is just a sealed `{ exp }` (the random IV makes each issue
+    // unique, so the token fingerprint visibly changes on refresh).
+    if (path.endsWith('/demo/token')) {
+      const access = await seal(env.SESSION_SECRET, { exp: Date.now() + 8000 })
+      return json({
+        access_token: access,
+        token_type: 'bearer',
+        expires_in: 8,
+        refresh_token: 'demo',
+      })
+    }
+    if (path.endsWith('/demo/api')) {
+      const tok = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '')
+      const claims = tok ? await unseal<{ exp: number }>(env.SESSION_SECRET, tok) : null
+      if (!claims || claims.exp <= Date.now())
+        return json({ ok: false, error: 'expired_token' }, 401)
+      return json({ ok: true, validForMs: claims.exp - Date.now() }, 200)
+    }
+
+    // ---- 1. login: authenticate the user via GitHub, requesting a refresh token
+    //         scoped to the My Account API (so we can drive Connected Accounts) ----
     if (path.endsWith('/login')) {
       const u = new URL(`https://${env.AUTH0_DOMAIN}/authorize`)
       u.searchParams.set('response_type', 'code')
       u.searchParams.set('client_id', env.AUTH0_CLIENT_ID)
       u.searchParams.set('redirect_uri', REDIRECT)
+      // Plain OIDC login via GitHub. With MRRT enabled, the resulting refresh
+      // token can be exchanged for a My Account API token during /connect —
+      // no need to request the /me/ audience up front (which the client grant
+      // for the My Account API may not yet permit at /authorize time).
       u.searchParams.set('scope', 'openid profile offline_access')
-      u.searchParams.set('connection', 'github') // log in via the GitHub connection → Token Vault stores it
+      u.searchParams.set('connection', 'github') // primary auth via GitHub
       return Response.redirect(u.toString(), 302)
     }
 
     // ---- 2. callback: exchange code → store the Auth0 refresh token in a sealed cookie ----
-    if (path.endsWith('/callback')) {
+    // NOTE: must not match /connect/callback — that's handled below.
+    if (path.endsWith('/callback') && !path.endsWith('/connect/callback')) {
       const code = url.searchParams.get('code')
       if (!code) return Response.redirect(`${ORIGIN}/agent`, 302)
       const res = await fetch(`https://${env.AUTH0_DOMAIN}/oauth/token`, {
@@ -108,12 +185,9 @@ export default {
         sub: claims.sub ?? 'user',
         name: claims.name ?? claims.nickname,
         refreshToken: tok.refresh_token,
+        vaulted: false,
       }
-      const cookie = `${COOKIE}=${await seal(env.SESSION_SECRET, sess)}; HttpOnly; Secure; SameSite=Lax; Path=/agent; Max-Age=3600`
-      return new Response(null, {
-        status: 302,
-        headers: { location: `${ORIGIN}/agent`, 'set-cookie': cookie },
-      })
+      return setSession(env, sess, `${ORIGIN}/agent`)
     }
 
     if (path.endsWith('/logout')) {
@@ -128,17 +202,128 @@ export default {
 
     const session = await getSession(request, env)
 
-    // ---- 3. the real action: agent stars a repo on YOUR GitHub, after YOUR approval ----
+    // ---- 3a. disconnect: delete the vaulted GitHub account so the next connect re-authorizes
+    //          from scratch. Required after changing the GitHub App's granted permissions —
+    //          otherwise Connected Accounts reuses the old, permission-less vault entry. ----
+    if (path.endsWith('/disconnect') && request.method === 'GET') {
+      if (!session) return Response.redirect(`${ORIGIN}/agent/login`, 302)
+      try {
+        const token = await myAccountToken(env, session.refreshToken)
+        const listRes = await fetch(`https://${env.AUTH0_DOMAIN}/me/v1/connected-accounts`, {
+          headers: { authorization: `Bearer ${token}` },
+        })
+        const list = (await listRes.json().catch(() => ({}))) as {
+          connected_accounts?: Array<{ id: string; connection: string }>
+        }
+        for (const acc of list.connected_accounts ?? []) {
+          if (acc.connection === 'github' && acc.id) {
+            await fetch(`https://${env.AUTH0_DOMAIN}/me/v1/connected-accounts/${acc.id}`, {
+              method: 'DELETE',
+              headers: { authorization: `Bearer ${token}` },
+            })
+          }
+        }
+        session.vaulted = false
+        return setSession(env, session, `${ORIGIN}/agent`)
+      } catch (err) {
+        return new Response(`Disconnect failed: ${String(err)}`, { status: 502 })
+      }
+    }
+
+    // ---- 3. connect: initiate the Connected Accounts flow to vault the GitHub token ----
+    if (path.endsWith('/connect') && request.method === 'GET') {
+      if (!session) return Response.redirect(`${ORIGIN}/agent/login`, 302)
+      try {
+        const token = await myAccountToken(env, session.refreshToken)
+        const state = crypto.randomUUID()
+        const res = await fetch(`https://${env.AUTH0_DOMAIN}/me/v1/connected-accounts/connect`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            connection: 'github',
+            redirect_uri: CONNECT_REDIRECT,
+            state,
+            scopes: ['public_repo'],
+          }),
+        })
+        if (!res.ok) {
+          const t = await res.text().catch(() => '')
+          return new Response(`Connected Accounts init failed (${res.status}) ${t}`, {
+            status: 502,
+          })
+        }
+        const j = (await res.json()) as {
+          auth_session?: string
+          connect_uri?: string
+          connect_params?: { ticket?: string }
+        }
+        if (!j.auth_session || !j.connect_uri)
+          return new Response('Connected Accounts: incomplete connect response', { status: 502 })
+        session.authSession = j.auth_session
+        session.connectState = state
+        const ticket = j.connect_params?.ticket
+        const target = ticket
+          ? `${j.connect_uri}?ticket=${encodeURIComponent(ticket)}`
+          : j.connect_uri
+        return setSession(env, session, target)
+      } catch (err) {
+        return new Response(`Connect failed: ${String(err)}`, { status: 502 })
+      }
+    }
+
+    // ---- 4. connect/callback: complete the flow → vault the GitHub token in Token Vault ----
+    // The connect_code may arrive as a query param (server redirect) or a URL fragment
+    // (browser-only). If it's missing from the query, serve a shim that pulls it from the
+    // hash and re-requests this route with it as a query param.
+    if (path.endsWith('/connect/callback')) {
+      if (!session?.authSession) return Response.redirect(`${ORIGIN}/agent`, 302)
+      const connectCode = url.searchParams.get('connect_code')
+      if (!connectCode) {
+        return new Response(connectCodeShim(), {
+          headers: { 'content-type': 'text/html; charset=utf-8' },
+        })
+      }
+      const state = url.searchParams.get('state')
+      if (state && session.connectState && state !== session.connectState)
+        return new Response('state mismatch', { status: 400 })
+      try {
+        const token = await myAccountToken(env, session.refreshToken)
+        const res = await fetch(`https://${env.AUTH0_DOMAIN}/me/v1/connected-accounts/complete`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            auth_session: session.authSession,
+            connect_code: connectCode,
+            redirect_uri: CONNECT_REDIRECT,
+          }),
+        })
+        if (!res.ok) {
+          const t = await res.text().catch(() => '')
+          return new Response(`Connected Accounts complete failed (${res.status}) ${t}`, {
+            status: 502,
+          })
+        }
+        session.vaulted = true
+        session.authSession = undefined
+        session.connectState = undefined
+        return setSession(env, session, `${ORIGIN}/agent`)
+      } catch (err) {
+        return new Response(`Vaulting failed: ${String(err)}`, { status: 502 })
+      }
+    }
+
+    // ---- 5. the real action: agent stars a repo on YOUR GitHub, after YOUR approval ----
     if (request.method === 'POST' && path.endsWith('/execute')) {
       if (!session) return json({ ok: false, reason: 'not_logged_in' }, 401)
-      const b = (await request.json().catch(() => ({}))) as { repo?: string; decision?: string }
-      const repo = cleanRepo(b.repo)
-      if (!repo) return json({ ok: false, reason: 'invalid_repo' }, 400)
+      if (!session.vaulted) return json({ ok: false, reason: 'not_connected' }, 403)
+      const b = (await request.json().catch(() => ({}))) as { note?: string; decision?: string }
+      const note = cleanNote(b.note)
+      if (!note) return json({ ok: false, reason: 'invalid_note' }, 400)
       const decision = b.decision === 'approved' ? 'approved' : 'denied'
 
       const audit: unknown[] = []
       const nominee = new Nominee({
-        // THE point: nominee fetches a fresh GitHub token for THIS user from Auth0 Token Vault
+        // nominee fetches a fresh GitHub token for THIS user from Auth0 Token Vault
         strategy: Auth0({
           domain: env.AUTH0_DOMAIN,
           clientId: env.AUTH0_CLIENT_ID,
@@ -152,9 +337,9 @@ export default {
       })
 
       try {
-        await nominee.approve({ user: session.sub, action: 'github.star', detail: { repo } })
+        await nominee.approve({ user: session.sub, action: 'github.gist', detail: { note } })
       } catch {
-        return json({ ok: true, decision, starred: false, audit })
+        return json({ ok: true, decision, created: false, audit })
       }
 
       const ip = request.headers.get('cf-connecting-ip') ?? 'anon'
@@ -168,16 +353,39 @@ export default {
         return json({ ok: false, reason: 'token_vault_failed', error: String(err), audit }, 502)
       }
 
-      const gh = await fetch(`https://api.github.com/user/starred/${repo}`, {
-        method: 'PUT',
+      const gh = await fetch('https://api.github.com/gists', {
+        method: 'POST',
         headers: {
           authorization: `Bearer ${token}`,
           accept: 'application/vnd.github+json',
           'user-agent': 'nominee-demo',
-          'content-length': '0',
+          'content-type': 'application/json',
         },
+        body: JSON.stringify({
+          description: 'Published by an AI agent on my behalf — nominee + Auth0 Token Vault demo',
+          public: true,
+          files: {
+            'from-my-agent.md': { content: gistContent(note, session.name || session.sub) },
+          },
+        }),
       })
-      return json({ ok: gh.ok, decision, starred: gh.ok, status: gh.status, repo, audit })
+      const result = (await gh.json().catch(() => ({}))) as { html_url?: string; message?: string }
+      const ghDiag = gh.ok
+        ? undefined
+        : {
+            accepted: gh.headers.get('x-accepted-github-permissions') ?? undefined,
+            oauthScopes: gh.headers.get('x-oauth-scopes') ?? undefined,
+            message: result.message,
+          }
+      return json({
+        ok: gh.ok,
+        decision,
+        created: gh.ok,
+        status: gh.status,
+        url: result.html_url,
+        ghDiag,
+        audit,
+      })
     }
 
     return new Response(page(session), { headers: { 'content-type': 'text/html; charset=utf-8' } })
@@ -200,23 +408,44 @@ function decodeJwt(jwt: string): { sub?: string; name?: string; nickname?: strin
 
 function page(session: Session | null) {
   const loggedOut = `
-    <p class="lede">Connect your GitHub through Auth0. nominee then fetches a <em>fresh</em> token for <strong>your</strong> account from Token Vault at the moment of the action — and only after <strong>you</strong> approve it.</p>
+    <p class="lede">Connect your GitHub through Auth0. nominee then fetches a <em>fresh</em> token for <strong>your</strong> account from <strong>Token Vault</strong> at the moment of the action — and only after <strong>you</strong> approve it.</p>
     <a class="primary" href="/agent/login">Connect GitHub via Auth0 →</a>
-    <p class="foot" style="margin-top:24px">You grant access once (real OAuth consent). The agent never sees your password or stores your token.</p>`
-  const loggedIn = `
-    <p class="lede">Connected as <strong>${escapeHtml(session?.name || session?.sub || 'you')}</strong>. Ask the agent to star a repo <em>on your account</em>. Nothing happens until you approve — then nominee pulls your token from Token Vault and acts. <a href="/agent/logout">log out</a></p>
+    <p class="foot" style="margin-top:24px">You log in once (real OAuth consent). The agent never sees your password or stores your token.</p>`
+  const needVault = `
+    <p class="lede">Signed in as <strong>${escapeHtml(session?.name || session?.sub || 'you')}</strong>. Now vault your GitHub token with Auth0 Token Vault so nominee can pull a fresh one per action. <a href="/agent/logout">log out</a></p>
     <div class="card">
-      <label for="repo">Repo to star (on your GitHub)</label>
-      <input id="repo" type="text" value="bharath31/nominee" />
-      <div class="row"><button id="run" class="primary">Ask agent to star it ▸</button><span id="status" class="sub"></span></div>
+      <label>Step 2 of 2 · Vault GitHub in Token Vault</label>
+      <p class="sub" style="margin:6px 0 16px">Authorizes nominee to fetch fresh GitHub tokens on your behalf. You can revoke this any time.</p>
+      <a class="primary" href="/agent/connect">Vault GitHub token →</a>
+    </div>`
+  const ready = `
+    <p class="lede">Connected &amp; vaulted as <strong>${escapeHtml(session?.name || session?.sub || 'you')}</strong>. Ask the agent to publish a gist <em>on your account</em>. Nothing happens until you approve — then nominee pulls your token from Token Vault and acts. <a href="/agent/disconnect">disconnect &amp; re-vault</a> · <a href="/agent/logout">log out</a></p>
+    <div class="card">
+      <label for="note">What should the agent publish?</label>
+      <input id="note" type="text" value="Notes from my agent session" maxlength="280" />
+      <div class="row"><button id="run" class="primary">Ask agent to publish it ▸</button><span id="status" class="sub"></span></div>
     </div>
     <div id="proposal" class="card" hidden></div>
     <div id="result" class="card" hidden></div>`
-  return html(session ? loggedIn : loggedOut, Boolean(session))
+  return html(
+    !session ? loggedOut : session.vaulted ? ready : needVault,
+    !!session && !!session.vaulted,
+  )
 }
 
 const escapeHtml = (s: string) =>
   s.replace(/[&<>]/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[m] as string)
+
+// Tiny shim: if Auth0 returned connect_code in the URL fragment (not sent to the
+// server), extract it client-side and re-request this route with it as a query param.
+function connectCodeShim() {
+  return `<!doctype html><html><head><meta charset="utf-8"><title>completing…</title></head><body>
+<script>
+const m=location.hash.match(/connect_code=([^&]+)/)||location.search.match(/connect_code=([^&]+)/);
+if(m){location.replace('/agent/connect/callback?connect_code='+encodeURIComponent(m[1]));}
+else{document.body.textContent='Missing connect_code — please reconnect.';}
+</script></body></html>`
+}
 
 function html(inner: string, loggedIn: boolean) {
   return `<!doctype html><html lang="en"><head>
@@ -261,18 +490,18 @@ function esc(s){return String(s).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>
 function jb(){return '<button class="jsontoggle" onclick="this.nextElementSibling.hidden=!this.nextElementSibling.hidden">show JSON</button><pre hidden>'+esc(JSON.stringify(J,null,2))+'</pre>'}
 function line(c,t){return '<div><span class="'+c+'">'+esc(t)+'</span></div>'}
 $('#run').onclick=()=>{
-  const repo=$('#repo').value.trim()
+  const note=$('#note').value.trim()
   $('#proposal').hidden=false
-  $('#proposal').innerHTML='<label>Agent proposes</label><div class="log"><span class="ac">github.star</span> '+esc(repo)+' <span class="m">— on your account</span></div><p class="sub">Sensitive: nominee is holding it for your approval.</p><div class="row"><button class="approve" id="ap">✓ Approve</button><button class="deny" id="dn">Deny</button></div>'
-  $('#ap').onclick=()=>go(repo,'approved');$('#dn').onclick=()=>go(repo,'denied')
+  $('#proposal').innerHTML='<label>Agent proposes</label><div class="log"><span class="ac">github.gist</span> <span class="m">publish &ldquo;</span>'+esc(note)+'<span class="m">&rdquo; to your account</span></div><p class="sub">Sensitive: nominee is holding it for your approval.</p><div class="row"><button class="approve" id="ap">✓ Approve</button><button class="deny" id="dn">Deny</button></div>'
+  $('#ap').onclick=()=>go(note,'approved');$('#dn').onclick=()=>go(note,'denied')
 }
-async function go(repo,decision){
+async function go(note,decision){
   $('#ap').disabled=true;$('#dn').disabled=true
-  if(decision==='approved')$('#ap').innerHTML='starring…'
-  const r=await fetch('/agent/execute',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({repo,decision})});const res=await r.json();J=res
+  if(decision==='approved')$('#ap').innerHTML='publishing…'
+  const r=await fetch('/agent/execute',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({note,decision})});const res=await r.json();J=res
   $('#result').hidden=false
   let log=line('m','$ approval '+decision)
-  if(decision==='approved'&&res.starred){log+=line('ac','⚸ you approved');log+=line('ok','✓ nominee pulled a fresh token from Auth0 Token Vault');log+=line('ok','✓ starred '+esc(res.repo)+' on your GitHub — check your stars ★')}
+  if(decision==='approved'&&res.created){log+=line('ac','⚸ you approved');log+=line('ok','✓ nominee pulled a fresh token from Auth0 Token Vault');log+=line('ok','✓ published a gist to your GitHub');if(res.url)log+='<div><a href="'+esc(res.url)+'" target="_blank" style="color:var(--seal)">'+esc(res.url)+' ↗</a></div>'}
   else if(decision==='denied'){log+=line('err','✗ denied — nothing happened on your account')}
   else{log+=line('err','✗ '+esc(res.reason||'failed')+(res.status?' ('+res.status+')':''))}
   log+='\\n'+line('m','audit  '+((res.audit||[]).map(e=>e.type).join(' → ')||'—'))

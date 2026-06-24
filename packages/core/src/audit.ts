@@ -5,6 +5,7 @@ export type AuditEventType =
   | 'token.cached'
   | 'token.error'
   | 'token.exchanged'
+  | 'token.invalidated'
   | 'approval.requested'
   | 'approval.resolved'
   | 'authz.checked'

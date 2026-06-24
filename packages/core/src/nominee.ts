@@ -53,6 +53,8 @@ export class Nominee {
   readonly strategy: Strategy
   private readonly approvals: ApprovalEngine
   private readonly cache = new Map<string, TokenResult>()
+  /** In-flight refreshes — concurrent cache-misses share one fetch (single-flight). */
+  private readonly inflight = new Map<string, Promise<TokenResult>>()
   private readonly listeners = new Set<(e: AuditEvent) => void>()
   private readonly expiryLeewayMs: number
   private readonly agent?: string
@@ -89,10 +91,23 @@ export class Nominee {
         this.emit({ type: 'token.cached', user, connection, chain: this.chain() })
         return cached.token
       }
+      // Coalesce: if a refresh for this key is already in flight, wait for it
+      // instead of starting a second one (prevents refresh stampedes when a
+      // long-running agent fires many tool calls at once).
+      const pending = this.inflight.get(key)
+      if (pending) {
+        const result = await pending
+        this.emit({ type: 'token.cached', user, connection, chain: this.chain() })
+        return result.token
+      }
     }
 
+    const fetchPromise = this.strategy.getToken({ user, connection, scopes })
+    // `force` always fetches its own token and never coalesces with others.
+    if (!force) this.inflight.set(key, fetchPromise)
+
     try {
-      const result = await this.strategy.getToken({ user, connection, scopes })
+      const result = await fetchPromise
       // Only cache when expiry is known; otherwise always re-fetch to stay safe.
       if (result.expiresAt !== undefined) this.cache.set(key, result)
       else this.cache.delete(key)
@@ -107,7 +122,23 @@ export class Nominee {
         detail: err instanceof Error ? err.message : String(err),
       })
       throw err
+    } finally {
+      if (!force) this.inflight.delete(key)
     }
+  }
+
+  /**
+   * Drop any cached token for (user, connection) so the next {@link token} call
+   * re-resolves from the strategy. Call this after you revoke access upstream
+   * (at your provider or token store): because nominee resolves at call time and
+   * never holds a token longer than the cache, the revocation takes effect on the
+   * very next call — `invalidate` just makes it immediate instead of waiting out
+   * the expiry leeway. Returns true if a cached entry was removed.
+   */
+  invalidate(user: string, connection: string): boolean {
+    const removed = this.cache.delete(this.cacheKey(user, connection))
+    this.emit({ type: 'token.invalidated', user, connection, chain: this.chain() })
+    return removed
   }
 
   /**

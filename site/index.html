@@ -81,11 +81,12 @@
       <section class="hero">
         <div class="hero-copy">
           <p class="eyebrow">Identity · Token delegation · On your behalf</p>
-          <h1>Your agent acts.<br /><span class="ink-soft">You stay in control.</span></h1>
+          <h1>Agents act on your behalf.<br /><span class="ink-soft">Their access shouldn't die mid-task.</span></h1>
           <p class="lede">
-            nominee hands your agent a <em>fresh</em> third-party token at the exact
-            moment of a tool call — pauses for human approval when it matters, and
-            records who authorized what. Provider-neutral. No signup to start.
+            Long-running agents outlive their tokens. nominee hands yours a
+            <em>fresh</em> one at the moment of each tool call — surviving expiry and
+            hibernation — gates the risky calls behind human approval, and logs the
+            chain. Zero signup to start; one line to swap providers.
           </p>
           <div class="hero-actions">
             <button class="copy" data-copy="npm i nominee" aria-label="Copy install command">
@@ -114,6 +115,75 @@
             <p class="tl" data-d="700"><span class="ok">✓</span> issue #1242 closed</p>
             <p class="tl" data-d="900"><span class="acc">⊞</span> audit <span class="muted">you → triage-bot → github</span> close_issue <span class="ok">approved</span></p>
           </div>
+        </div>
+      </section>
+
+      <section class="section proof" id="proof">
+        <div class="section-heading">
+          <p class="eyebrow">Proof, running live</p>
+          <h2>Same agent. One keeps working past its token's expiry.</h2>
+          <p>
+            Two agents call a protected API across a session longer than the token
+            lives (~8s here). The left one grabs a token once and reuses it — what
+            every orchestrator leaves you to do. The right one asks nominee each
+            call. This runs the real <code>nominee</code> from npm <em>in your
+            browser</em> — open the Network tab and watch it refresh.
+          </p>
+        </div>
+        <div class="race" data-race>
+          <div class="race-clock"><span data-clock>starting…</span></div>
+          <div class="race-lanes">
+            <div class="lane" data-lane="captured">
+              <div class="lane-head">
+                <span class="lane-name">captured token</span>
+                <span class="lane-sub">grab once · reuse — AI SDK / Cloudflare / LangChain leave you here</span>
+              </div>
+              <div class="race-log" data-log></div>
+              <div class="lane-verdict" data-verdict></div>
+            </div>
+            <div class="lane hi" data-lane="nominee">
+              <div class="lane-head">
+                <span class="lane-name">nominee</span>
+                <span class="lane-sub">await nominee.token() per call</span>
+              </div>
+              <div class="race-log" data-log></div>
+              <div class="lane-verdict" data-verdict></div>
+            </div>
+          </div>
+          <button class="race-replay" data-replay hidden>↻ replay</button>
+        </div>
+
+        <div class="swap">
+          <p class="swap-head">Same agent code — only the <code>strategy</code> line changes:</p>
+          <div class="code-card" data-tabs>
+            <div class="code-top" role="tablist" aria-label="Swap the strategy">
+              <button class="tab active" data-tab="fn" role="tab" aria-selected="true">function</button>
+              <button class="tab" data-tab="oauth2" role="tab" aria-selected="false">oauth2</button>
+              <button class="tab" data-tab="auth0" role="tab" aria-selected="false">auth0</button>
+              <span class="file">agent.ts</span>
+              <button class="code-copy" aria-label="Copy code">copy</button>
+            </div>
+            <pre data-panel="fn"><code><span class="k">const</span> nominee = <span class="k">new</span> <span class="t">Nominee</span>({
+  strategy: ({ user, connection }) => db.<span class="fn">refreshToken</span>(user, connection), <span class="c">// zero signup</span>
+})
+<span class="c">// everything below is identical, whatever the strategy ↓</span>
+<span class="k">const</span> token = <span class="k">await</span> nominee.<span class="fn">token</span>({ user, connection: <span class="s">'github'</span> })</code></pre>
+            <pre data-panel="oauth2" hidden><code><span class="k">const</span> nominee = <span class="k">new</span> <span class="t">Nominee</span>({
+  strategy: <span class="fn">OAuth2</span>({ connections: { github: { tokenEndpoint, clientId, refreshToken } } }), <span class="c">// bring your own OAuth</span>
+})
+<span class="c">// everything below is identical, whatever the strategy ↓</span>
+<span class="k">const</span> token = <span class="k">await</span> nominee.<span class="fn">token</span>({ user, connection: <span class="s">'github'</span> })</code></pre>
+            <pre data-panel="auth0" hidden><code><span class="k">const</span> nominee = <span class="k">new</span> <span class="t">Nominee</span>({
+  strategy: <span class="fn">Auth0</span>({ domain, clientId, clientSecret, subjectToken }), <span class="c">// managed Token Vault + CIBA</span>
+})
+<span class="c">// everything below is identical, whatever the strategy ↓</span>
+<span class="k">const</span> token = <span class="k">await</span> nominee.<span class="fn">token</span>({ user, connection: <span class="s">'github'</span> })</code></pre>
+          </div>
+          <p class="swap-foot">
+            The race above runs the <strong>oauth2</strong> line. Want the
+            <strong>auth0</strong> line for real? →
+            <a href="/agent">a live agent acting on your GitHub, after your approval</a>.
+          </p>
         </div>
       </section>
 
@@ -221,33 +291,42 @@
       <section class="section" id="compare">
         <div class="section-heading">
           <p class="eyebrow">Why nominee</p>
-          <h2>The part that's actually hard, done for you.</h2>
-          <p>Token freshness across long runs, human approval, and audit — in one provider-neutral layer.</p>
+          <h2>Why not just use what you already have?</h2>
+          <p>Your orchestrator won't touch third-party auth; one IdP solves it but owns your stack. The honest gap, side by side.</p>
         </div>
         <div class="compare-wrap">
           <table class="compare">
             <thead>
               <tr>
-                <th scope="col">Capability</th>
+                <th scope="col">For agent third-party auth</th>
                 <th scope="col" class="hi">nominee</th>
-                <th scope="col">DIY token refresh</th>
-                <th scope="col">Vercel Connect</th>
-                <th scope="col">AI SDK approvals</th>
+                <th scope="col">Vercel AI SDK</th>
+                <th scope="col">Cloudflare Agents</th>
+                <th scope="col">LangChain</th>
+                <th scope="col">Auth0 alone</th>
               </tr>
             </thead>
             <tbody>
-              <tr><th scope="row">Fresh token at call time</th><td class="hi y">Built in</td><td class="n">You build it</td><td class="y">Vercel only</td><td class="x">—</td></tr>
-              <tr><th scope="row">Provider-neutral</th><td class="hi y">Any provider</td><td class="y">Yours</td><td class="x">Vercel</td><td class="x">n/a</td></tr>
-              <tr><th scope="row">Human-in-the-loop approval</th><td class="hi y">Built in</td><td class="x">—</td><td class="x">—</td><td class="y">Yes</td></tr>
-              <tr><th scope="row">Audit chain (user→agent→tool)</th><td class="hi y">Built in</td><td class="x">—</td><td class="n">Partial</td><td class="x">—</td></tr>
-              <tr><th scope="row">No signup · zero-dep core</th><td class="hi y">Yes</td><td class="y">Yes</td><td class="x">—</td><td class="y">Yes</td></tr>
+              <tr><th scope="row">Fresh token at call time</th><td class="hi y">Built in</td><td class="x">You build it</td><td class="x">You build it</td><td class="x">You build it</td><td class="y">Token Vault</td></tr>
+              <tr><th scope="row">Fresh token after durable resume</th><td class="hi y">Re-resolves</td><td class="x">—</td><td class="n">State, not tokens</td><td class="n">State, not tokens</td><td class="y">Re-fetch</td></tr>
+              <tr><th scope="row">Provider-neutral (swap vendors)</th><td class="hi y">Any provider</td><td class="x">n/a</td><td class="x">n/a</td><td class="x">n/a</td><td class="x">Auth0 only</td></tr>
+              <tr><th scope="row">Zero-signup to start</th><td class="hi y">Yes</td><td class="x">n/a</td><td class="x">n/a</td><td class="x">n/a</td><td class="x">Tenant + setup</td></tr>
+              <tr><th scope="row">Human-in-the-loop approval</th><td class="hi y">Built in</td><td class="n">Primitives</td><td class="x">—</td><td class="y">Interrupts</td><td class="y">CIBA</td></tr>
+              <tr><th scope="row">Audit log (who authorized what)</th><td class="hi y">Built in</td><td class="x">—</td><td class="x">—</td><td class="n">LangSmith</td><td class="y">Tenant logs</td></tr>
             </tbody>
           </table>
         </div>
         <p class="compare-note">
-          AI SDK v6 added approval primitives — great. nominee is orthogonal: it adds the
-          <em>token lifecycle</em>, the <em>provider-neutral</em> strategy layer, and a
-          <em>cross-framework audit</em> the same way in every runtime.
+          Orchestrators (AI SDK, Cloudflare Agents, LangChain) run the agent but
+          <em>by design</em> hand you the third-party auth. Auth0 solves the mechanics
+          beautifully — but you marry it. nominee is the neutral seam between them:
+          start with a function, swap to Auth0 in one line.
+        </p>
+        <p class="compare-note muted">
+          <strong>When you don't need nominee:</strong> a single-provider, short-lived,
+          non-durable app — use your IdP's SDK or ~20 lines of refresh. nominee earns
+          its place when agents are long-running, durable, multi-provider, or you
+          refuse lock-in.
         </p>
       </section>
 
@@ -313,7 +392,7 @@
             </button>
             <a class="star-cta" href="https://github.com/bharath31/nominee">★ Star on GitHub</a>
           </div>
-          <p class="cta-live"><a href="/agent">▶ See a real agent run, live on Cloudflare Workers AI →</a></p>
+          <p class="cta-live"><a href="/agent">▶ See a real agent act on your GitHub — with your approval →</a></p>
           <div class="badges" aria-label="project stats">
             <img src="https://img.shields.io/github/stars/bharath31/nominee?style=flat-square&colorA=0a1020&colorB=d9a441&label=stars" alt="GitHub stars" loading="lazy" />
             <img src="https://img.shields.io/npm/v/nominee?style=flat-square&colorA=0a1020&colorB=d9a441&label=version" alt="npm version" loading="lazy" />
@@ -377,5 +456,6 @@
       }
     </script>
     <script src="/assets/demo.js" defer></script>
+    <script type="module" src="/assets/session.js"></script>
   </body>
 </html>
