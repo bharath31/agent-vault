@@ -13,26 +13,14 @@
       "require": "./dist/index.cjs"
     }
   },
-  "files": [
-    "dist",
-    "README.md"
-  ],
+  "files": ["dist", "README.md"],
   "sideEffects": false,
   "scripts": {
     "build": "tsup",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
-  "keywords": [
-    "auth0",
-    "token-vault",
-    "ciba",
-    "ai",
-    "agents",
-    "auth",
-    "token",
-    "nominee"
-  ],
+  "keywords": ["auth0", "token-vault", "ciba", "ai", "agents", "auth", "token", "nominee"],
   "author": "Bharath",
   "license": "MIT",
   "repository": {

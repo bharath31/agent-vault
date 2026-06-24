@@ -80,22 +80,15 @@
     <main>
       <section class="hero">
         <div class="hero-copy">
-          <p class="eyebrow">Identity · Token delegation · On your behalf</p>
           <h1>Agents act on your behalf.<br /><span class="ink-soft">Their access shouldn't die mid-task.</span></h1>
-          <p class="lede">
-            Long-running agents outlive their tokens. nominee hands yours a
-            <em>fresh</em> one at the moment of each tool call — surviving expiry and
-            hibernation — gates the risky calls behind human approval, and logs the
-            chain. Zero signup to start; one line to swap providers.
-          </p>
+          <p class="lede">Fresh token at each tool call. Survives hibernation. Human approval built in. Provider-neutral.</p>
           <div class="hero-actions">
             <button class="copy" data-copy="npm i nominee" aria-label="Copy install command">
               <span class="prompt">›</span><span class="cmd">npm i nominee</span><span class="copy-hint">copy</span>
             </button>
-            <a class="text-link" href="/docs/">Read the docs →</a>
-            <a class="text-link" href="/agent">Run it live →</a>
+            <a class="text-link" href="/docs/">Docs →</a>
+            <a class="text-link" href="/agent">Live demo →</a>
           </div>
-          <p class="trust">Standalone · Vercel AI SDK · Eve · Cloudflare Agents · Auth0 (optional)</p>
         </div>
 
         <!-- the proof: an agent run, start to finish -->
@@ -107,27 +100,25 @@
           <div class="term-body">
             <p class="tl" data-d="120"><span class="muted">$</span> agent run <span class="str">"close stale issues in acme/api"</span></p>
             <p class="tl" data-d="700"><span class="muted">→</span> tool <span class="hl">github.close_issue</span> <span class="muted">#1242</span></p>
-            <p class="tl bad" data-d="900"><span>✗</span> 401 — github token expired <span class="muted">(authorized 6h ago)</span></p>
-            <p class="tl" data-d="800"><span class="acc">↻</span> nominee — refreshing token via your strategy… <span class="ok">ok</span></p>
-            <p class="tl" data-d="500"><span class="acc">⚸</span> approval required <span class="muted">close_issue · acme/api#1242</span></p>
-            <p class="tl dim" data-d="1100">&nbsp;&nbsp;&nbsp;▸ pushed to your phone — waiting…</p>
+            <p class="tl bad" data-d="900"><span>✗</span> 401 github token expired <span class="muted">(authorized 6h ago)</span></p>
+            <p class="tl" data-d="800"><span class="acc">~</span> nominee refreshing token via your strategy… <span class="ok">ok</span></p>
+            <p class="tl" data-d="500"><span class="acc">?</span> approval required <span class="muted">close_issue · acme/api#1242</span></p>
+            <p class="tl dim" data-d="1100">&nbsp;&nbsp;&nbsp;▸ pushed to your phone, waiting…</p>
             <p class="tl" data-d="700"><span class="ok">✓</span> approved by <span class="hl">alice</span> <span class="muted">(2.3s)</span></p>
             <p class="tl" data-d="700"><span class="ok">✓</span> issue #1242 closed</p>
-            <p class="tl" data-d="900"><span class="acc">⊞</span> audit <span class="muted">you → triage-bot → github</span> close_issue <span class="ok">approved</span></p>
+            <p class="tl" data-d="900"><span class="acc">#</span> audit <span class="muted">you → triage-bot → github</span> close_issue <span class="ok">approved</span></p>
           </div>
         </div>
       </section>
 
       <section class="section proof" id="proof">
         <div class="section-heading">
-          <p class="eyebrow">Proof, running live</p>
           <h2>Same agent. One keeps working past its token's expiry.</h2>
           <p>
             Two agents call a protected API across a session longer than the token
-            lives (~8s here). The left one grabs a token once and reuses it — what
-            every orchestrator leaves you to do. The right one asks nominee each
-            call. This runs the real <code>nominee</code> from npm <em>in your
-            browser</em> — open the Network tab and watch it refresh.
+            lives (~8s here). Left: grab a token once and reuse it. Right: call
+            <code>nominee.token()</code> each time. The real <code>nominee</code>
+            package runs in your browser. Open the Network tab and watch the refresh.
           </p>
         </div>
         <div class="race" data-race>
@@ -136,7 +127,7 @@
             <div class="lane" data-lane="captured">
               <div class="lane-head">
                 <span class="lane-name">captured token</span>
-                <span class="lane-sub">grab once · reuse — AI SDK / Cloudflare / LangChain leave you here</span>
+                <span class="lane-sub">grab once, reuse forever. what every orchestrator leaves you with.</span>
               </div>
               <div class="race-log" data-log></div>
               <div class="lane-verdict" data-verdict></div>
@@ -154,7 +145,7 @@
         </div>
 
         <div class="swap">
-          <p class="swap-head">Same agent code — only the <code>strategy</code> line changes:</p>
+          <p class="swap-head">Same agent code. Only the <code>strategy</code> line changes:</p>
           <div class="code-card" data-tabs>
             <div class="code-top" role="tablist" aria-label="Swap the strategy">
               <button class="tab active" data-tab="fn" role="tab" aria-selected="true">function</button>
@@ -190,7 +181,7 @@
       <section class="strip" aria-label="Why nominee">
         <div><strong>No signup by default</strong><span>Bring a function, env var, DB lookup, or OAuth refresh. Auth0 is optional.</span></div>
         <div><strong>Zero deps in core</strong><span>Provider and framework code lives in optional adapter packages.</span></div>
-        <div><strong>Made for durable runs</strong><span>Ask for a token at call time — never hand a paused agent a stale one.</span></div>
+        <div><strong>Made for durable runs</strong><span>Ask for a token at call time. Never hand a paused agent a stale one.</span></div>
       </section>
 
       <section class="section" id="install">
@@ -248,7 +239,7 @@
       <section class="section how" id="how">
         <div class="section-heading narrow">
           <p class="eyebrow">How it works</p>
-          <h2>A letter of authority — issued, used, revocable.</h2>
+          <h2>A letter of authority: issued, cached, revocable.</h2>
           <p>
             The user is the principal. Your agent is the nominee, authorized to act
             on their behalf within a scope. nominee fetches a fresh token at the
@@ -319,12 +310,12 @@
         <p class="compare-note">
           Orchestrators (AI SDK, Cloudflare Agents, LangChain) run the agent but
           <em>by design</em> hand you the third-party auth. Auth0 solves the mechanics
-          beautifully — but you marry it. nominee is the neutral seam between them:
+          beautifully, but you marry it. nominee is the neutral seam between them:
           start with a function, swap to Auth0 in one line.
         </p>
         <p class="compare-note muted">
           <strong>When you don't need nominee:</strong> a single-provider, short-lived,
-          non-durable app — use your IdP's SDK or ~20 lines of refresh. nominee earns
+          non-durable app: use your IdP's SDK or ~20 lines of refresh. nominee earns
           its place when agents are long-running, durable, multi-provider, or you
           refuse lock-in.
         </p>
@@ -369,8 +360,8 @@
           <h2>Hold the risky actions until a person says yes.</h2>
           <p>
             Gate deletes, payments, or outbound mail. Use the built-in approval
-            engine, or a native flow like Auth0 CIBA that pings the user's phone —
-            the agent pauses without burning compute, then resumes.
+            engine, or a native flow like Auth0 CIBA that pings the user's phone.
+            The agent pauses, then resumes.
           </p>
         </div>
         <div class="approval-card" role="status">
@@ -392,7 +383,7 @@
             </button>
             <a class="star-cta" href="https://github.com/bharath31/nominee">★ Star on GitHub</a>
           </div>
-          <p class="cta-live"><a href="/agent">▶ See a real agent act on your GitHub — with your approval →</a></p>
+          <p class="cta-live"><a href="/agent">▶ See a real agent act on your GitHub, with your approval →</a></p>
           <div class="badges" aria-label="project stats">
             <img src="https://img.shields.io/github/stars/bharath31/nominee?style=flat-square&colorA=0a1020&colorB=d9a441&label=stars" alt="GitHub stars" loading="lazy" />
             <img src="https://img.shields.io/npm/v/nominee?style=flat-square&colorA=0a1020&colorB=d9a441&label=version" alt="npm version" loading="lazy" />
@@ -413,7 +404,7 @@
         <span>nominee</span>
       </div>
       <p class="foot-note">
-        Built by <a href="https://bharath.sh">Bharath</a> at Auth0. Neutral by design —
+        Built by <a href="https://bharath.sh">Bharath</a> at Auth0. Neutral by design.
         Auth0 is one strategy of many. PRs for other providers welcome.
       </p>
       <div class="foot-links">
