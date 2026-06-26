@@ -13,3 +13,7 @@ AGENTS.local.md
 PROGRESS.local.md
 *.local.md
 launch/
+
+# transient secret-staging files
+*.rk.tmp
+.rk.tmp

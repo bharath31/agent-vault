@@ -6,11 +6,26 @@ compatibility_flags = ["nodejs_compat"]
 # Takes over the testbed URL once deployed
 routes = [{ pattern = "nominee.dev/agent*", zone_name = "nominee.dev" }]
 
-# rate-limit the real write action: 5 stars / 60s / IP
+[vars]
+# Verified Resend sending domain (shared with the cf-agent testbed).
+FROM = "nominee <agent@email.nominee.dev>"
+
+# rate-limit the real write action: 5 sessions / 60s / IP
 [[ratelimits]]
 name = "STAR_RL"
 namespace_id = "2001"
 simple = { limit = 5, period = 60 }
 
+# The agent session IS a Durable Object: it hibernates while waiting for
+# out-of-band (email) approval and resumes when the link is clicked. The token
+# is re-resolved from Token Vault at action time, surviving the pause.
+[[durable_objects.bindings]]
+name = "SESSIONS"
+class_name = "AgentSession"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["AgentSession"]
+
 # Secrets (set with `wrangler secret put <NAME>`):
-#   AUTH0_DOMAIN, AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET, SESSION_SECRET
+#   AUTH0_DOMAIN, AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET, SESSION_SECRET, RESEND_API_KEY
