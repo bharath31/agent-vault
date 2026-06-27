@@ -343,11 +343,12 @@ export default {
     if (request.method === 'POST' && path.endsWith('/session/start')) {
       if (!session) return json({ ok: false, reason: 'not_logged_in' }, 401)
       if (!session.vaulted) return json({ ok: false, reason: 'not_connected' }, 403)
-      const b = (await request.json().catch(() => ({}))) as { topic?: string; email?: string }
+      const b = (await request.json().catch(() => ({}))) as { topic?: string; email?: string; method?: string }
       const topic = cleanTopic(b.topic)
       if (!topic) return json({ ok: false, reason: 'invalid_topic' }, 400)
+      const method: 'email' | 'ciba' = b.method === 'ciba' ? 'ciba' : 'email'
       const email = (b.email || session.email || '').trim()
-      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))
+      if (method === 'email' && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))
         return json({ ok: false, reason: 'invalid_email' }, 400)
 
       const ip = request.headers.get('cf-connecting-ip') ?? 'anon'
@@ -365,6 +366,7 @@ export default {
           name: session.name ?? session.sub,
           email,
           topic,
+          method,
           refreshToken: session.refreshToken,
         }),
       })
@@ -395,6 +397,8 @@ interface SessionState {
   refreshToken: string
   approvalKey: string
   status: 'awaiting_approval' | 'approved' | 'denied' | 'done' | 'error'
+  method: 'email' | 'ciba'
+  cibaReqId?: string
   steps: Step[]
   startedAt: number
   pausedAt?: number
@@ -458,6 +462,7 @@ export class AgentSession {
       name: string
       email: string
       topic: string
+      method: 'email' | 'ciba'
       refreshToken: string
     }
     const now = Date.now()
@@ -466,6 +471,7 @@ export class AgentSession {
       ...init,
       approvalKey: crypto.randomUUID(),
       status: 'awaiting_approval',
+      method: init.method ?? 'email',
       steps: [{ kind: 'started', at: now, text: `agent session started — "${init.topic}"` }],
       startedAt: now,
       audit,
@@ -505,25 +511,31 @@ export class AgentSession {
     s.steps.push({
       kind: 'paused',
       at: s.pausedAt,
-      text: `paused — approval link emailed to ${s.email}. Agent is hibernating; it will resume when you approve.`,
+      text: s.method === 'ciba'
+        ? 'paused — Auth0 Guardian push sent. Agent is hibernating; it will wake when you approve on your phone.'
+        : `paused — approval link emailed to ${s.email}. Agent is hibernating; it will resume when you approve.`,
     })
 
     await this.save(s)
 
-    // Send the out-of-band approval email. The agent now does NOTHING until the
-    // link is clicked — no compute, no polling, just durable state.
-    await this.sendApprovalEmail(s)
+    if (s.method === 'ciba') {
+      await this.initiateCiba(s)
+    } else {
+      // Send the out-of-band approval email. The agent now does NOTHING until the
+      // link is clicked — no compute, no polling, just durable state.
+      await this.sendApprovalEmail(s)
+    }
 
     return json({ status: s.status })
   }
 
-  /** Phase 2: woken by the email link. nominee fetches a token AT THIS MOMENT
-   *  (not at session start) and the agent publishes — surviving the pause. */
+  /** Phase 2 (email path): woken by the email link click. */
   private async resolve(decision: 'approved' | 'denied', k: string): Promise<Response> {
     const s = await this.load()
     if (!s) return json({ ok: false, reason: 'unknown_session' }, 404)
     if (s.status === 'done' || s.status === 'denied')
       return json({ ok: s.status === 'done', already: true, gistUrl: s.gistUrl }, 200)
+    if (s.method === 'ciba') return json({ ok: false, reason: 'ciba_session' }, 400)
     if (k !== s.approvalKey) return json({ ok: false, reason: 'bad_key' }, 403)
 
     s.resumedAt = Date.now()
@@ -539,6 +551,13 @@ export class AgentSession {
       return json({ ok: false, decision })
     }
 
+    const ok = await this.act(s)
+    if (ok) return json({ ok: true, decision, gistUrl: s.gistUrl })
+    return json({ ok: false, reason: 'action_failed' }, 502)
+  }
+
+  /** Fetch a fresh token and publish the gist. Mutates and saves s. Returns true on success. */
+  private async act(s: SessionState): Promise<boolean> {
     try {
       const nominee = this.nominee(s, s.audit)
       // The whole point: ask for the token NOW, at action time. If the session
@@ -560,19 +579,104 @@ export class AgentSession {
       if (!gist.ok) {
         s.status = 'error'
         s.steps.push({ kind: 'error', at: Date.now(), text: `publish failed (${gist.status})` })
-        await this.save(s)
-        return json({ ok: false, reason: 'publish_failed', status: gist.status }, 502)
+      } else {
+        s.gistUrl = gist.url
+        s.status = 'done'
+        s.steps.push({ kind: 'acted', at: Date.now(), text: 'published a gist to your GitHub' })
       }
-      s.gistUrl = gist.url
-      s.status = 'done'
-      s.steps.push({ kind: 'acted', at: Date.now(), text: 'published a gist to your GitHub' })
-      await this.save(s)
-      return json({ ok: true, decision, gistUrl: s.gistUrl })
     } catch (err) {
       s.status = 'error'
       s.steps.push({ kind: 'error', at: Date.now(), text: short(err) })
+    }
+    await this.save(s)
+    return s.status === 'done'
+  }
+
+  /** Initiate a CIBA bc-authorize request and arm the first poll alarm. */
+  private async initiateCiba(s: SessionState): Promise<void> {
+    try {
+      const msg = `Approve: publish a gist — ${s.topic.slice(0, 50)}`
+      const authRes = await fetch(`https://${this.env.AUTH0_DOMAIN}/bc-authorize`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' },
+        body: new URLSearchParams({
+          client_id: this.env.AUTH0_CLIENT_ID,
+          client_secret: this.env.AUTH0_CLIENT_SECRET,
+          scope: 'openid',
+          login_hint: s.user,
+          binding_message: msg,
+        }),
+      })
+      if (!authRes.ok) {
+        const text = await authRes.text().catch(() => '')
+        throw new Error(`bc-authorize failed (${authRes.status}) ${text}`)
+      }
+      const auth = (await authRes.json()) as { auth_req_id: string; expires_in?: number; interval?: number }
+      s.cibaReqId = auth.auth_req_id
       await this.save(s)
-      return json({ ok: false, reason: 'token_vault_failed', error: short(err) }, 502)
+      await this.state.storage.setAlarm(Date.now() + (auth.interval ?? 5) * 1000)
+    } catch (err) {
+      s.steps.push({ kind: 'error', at: Date.now(), text: `CIBA initiation failed: ${short(err)}` })
+      s.status = 'error'
+      await this.save(s)
+    }
+  }
+
+  /** Phase 2 (CIBA path): called by the Cloudflare runtime on each alarm tick.
+   *  Polls Auth0 once; re-arms if pending, resolves and acts if approved. */
+  async alarm(): Promise<void> {
+    const s = await this.load()
+    if (!s || s.method !== 'ciba' || !s.cibaReqId || s.status !== 'awaiting_approval') return
+
+    try {
+      const pollRes = await fetch(`https://${this.env.AUTH0_DOMAIN}/oauth/token`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' },
+        body: new URLSearchParams({
+          grant_type: 'urn:openid:params:grant-type:ciba',
+          auth_req_id: s.cibaReqId,
+          client_id: this.env.AUTH0_CLIENT_ID,
+          client_secret: this.env.AUTH0_CLIENT_SECRET,
+        }),
+      })
+
+      if (pollRes.ok) {
+        s.resumedAt = Date.now()
+        s.steps.push({
+          kind: 'resumed',
+          at: s.resumedAt,
+          text: `you approved via Auth0 Guardian — agent woke after ${humanGap(s.pausedAt, s.resumedAt)} of hibernation`,
+        })
+        await this.act(s)
+        return
+      }
+
+      const err = (await pollRes.json().catch(() => ({}))) as { error?: string }
+      if (err.error === 'authorization_pending' || err.error === 'slow_down') {
+        await this.state.storage.setAlarm(Date.now() + 5000)
+        return
+      }
+      if (err.error === 'access_denied') {
+        s.resumedAt = Date.now()
+        s.status = 'denied'
+        s.steps.push({
+          kind: 'resumed',
+          at: s.resumedAt,
+          text: `you denied via Auth0 Guardian — agent stayed paused and took no action`,
+        })
+        await this.save(s)
+        return
+      }
+      if (err.error === 'expired_token') {
+        s.status = 'error'
+        s.steps.push({ kind: 'error', at: Date.now(), text: 'CIBA request expired — Guardian notification went unanswered' })
+        await this.save(s)
+        return
+      }
+      // Unknown error: retry
+      await this.state.storage.setAlarm(Date.now() + 5000)
+    } catch {
+      await this.state.storage.setAlarm(Date.now() + 5000)
     }
   }
 
@@ -645,7 +749,8 @@ function humanGap(from?: number, to?: number): string {
 function gistBody(s: SessionState): string {
   const who = s.ghLogin ? `@${s.ghLogin}` : s.name
   const repos = s.ghRepos?.length ? `Recent repos reviewed: ${s.ghRepos.join(', ')}.\n\n` : ''
-  return `# Agent session: ${s.topic}\n\nThis gist was published by an autonomous agent acting for ${who}, after ${who} approved it from their inbox.\n\n${repos}The agent paused and **hibernated** while waiting for approval. When approval arrived, **nominee** fetched a fresh, short-lived GitHub token from **Auth0 Token Vault** at the moment of the action — it never held a captured token across the pause. The agent never saw a password.\n\n— via https://nominee.dev\n`
+  const channel = s.method === 'ciba' ? 'a push notification to their phone' : 'an email link'
+  return `# Agent session: ${s.topic}\n\nThis gist was published by an autonomous agent acting for ${who}, after ${who} approved it via ${channel}.\n\n${repos}The agent paused and **hibernated** while waiting for approval. When approval arrived, **nominee** fetched a fresh, short-lived GitHub token from **Auth0 Token Vault** at the moment of the action — it never held a captured token across the pause. The agent never saw a password.\n\n— via https://nominee.dev\n`
 }
 
 async function getSession(req: Request, env: Env): Promise<Session | null> {
@@ -714,7 +819,7 @@ h1{font-size:24px;margin:0 0 12px;letter-spacing:-.025em}p{color:#38414f;line-he
 
 function page(session: Session | null) {
   const loggedOut = `
-    <p class="lede">Start a real agent session. It reads your GitHub, drafts a gist, then <em>pauses and emails you</em> for approval — and only acts after you click the link. nominee fetches a <em>fresh</em> token from <strong>Auth0 Token Vault</strong> at the moment of the action.</p>
+    <p class="lede">Start a real agent session. It reads your GitHub, drafts a gist, then <em>pauses and waits for your approval</em> — via email link or push to phone. nominee fetches a <em>fresh</em> token from Auth0 Token Vault only at the moment of the action.</p>
     <a class="primary" href="/agent/login">Connect GitHub via Auth0 →</a>
     <p class="foot" style="margin-top:24px">You log in once (real OAuth consent). The agent never sees your password or stores your token.</p>`
   const needVault = `
@@ -725,12 +830,33 @@ function page(session: Session | null) {
       <a class="primary" href="/agent/connect">Vault GitHub token →</a>
     </div>`
   const ready = `
-    <p class="lede">Connected &amp; vaulted as <strong>${escapeHtml(session?.name || session?.sub || 'you')}</strong>. Start a session — the agent works, then <em>pauses and emails you</em> for approval. Approve from your phone; the agent wakes and acts with a token nominee pulls <em>then</em>, not now. <a href="/agent/disconnect">disconnect &amp; re-vault</a> · <a href="/agent/logout">log out</a></p>
+    <p class="lede">Connected &amp; vaulted as <strong>${escapeHtml(session?.name || session?.sub || 'you')}</strong>. Start a session — the agent reads your GitHub, then <em>pauses and waits for your approval</em>. nominee fetches a fresh token at the moment you approve. <a href="/agent/disconnect">disconnect &amp; re-vault</a> · <a href="/agent/logout">log out</a></p>
     <div class="card" id="starter">
       <label for="topic">What should the agent work on?</label>
       <input id="topic" type="text" value="Summary of my recent GitHub activity" maxlength="140" />
-      <label for="email" style="margin-top:14px">Send the approval to</label>
-      <input id="email" type="email" value="${escapeHtml(session?.email || '')}" placeholder="you@example.com" />
+      <div style="margin-top:16px">
+        <label>How should we notify you for approval?</label>
+        <div class="method-row">
+          <label class="method-opt"><input type="radio" name="method" value="email" checked /> <span>Email link</span></label>
+          <label class="method-opt"><input type="radio" name="method" value="ciba" /> <span>Push to phone <span class="badge">instant</span></span></label>
+        </div>
+      </div>
+      <div id="email-wrap" style="margin-top:14px">
+        <label for="email">Send the approval to</label>
+        <input id="email" type="email" value="${escapeHtml(session?.email || '')}" placeholder="you@example.com" />
+      </div>
+      <div id="push-wrap" style="display:none;margin-top:14px">
+        <div class="setup-note">
+          <p class="setup-title">Approve on your phone in one tap.</p>
+          <p class="setup-body">The agent sends a push notification the moment it pauses. Tap <b>Approve</b> — the agent wakes instantly and acts with a fresh token.</p>
+          <p class="setup-body" style="margin-top:10px">Needs the <strong>Auth0 Guardian</strong> authenticator app (free) enrolled on your account:</p>
+          <div class="store-links">
+            <a href="https://apps.apple.com/us/app/auth0-guardian/id1093447833" target="_blank" rel="noopener" class="store-btn">↓ App Store</a>
+            <a href="https://play.google.com/store/apps/details?id=com.auth0.guardian" target="_blank" rel="noopener" class="store-btn">↓ Google Play</a>
+          </div>
+          <p class="setup-foot">Already installed? Make sure MFA is enabled on your Auth0 account and Guardian is enrolled. If you haven't set it up yet, use <b>Email link</b> instead.</p>
+        </div>
+      </div>
       <div class="row"><button id="run" class="primary">Start agent session ▸</button><span id="status" class="sub"></span></div>
     </div>
     <div id="timeline" class="card" hidden></div>`
@@ -780,6 +906,10 @@ a.primary:hover,button:hover{border-color:#d2d6e0}
 .approve{background:var(--navy);color:#fff;border-color:var(--navy);font-weight:600}.approve:hover{background:var(--navy-hover)}
 .deny{color:var(--ink-soft)}
 button:disabled{opacity:.5}
+.method-row{display:flex;gap:20px;margin-top:8px}.method-opt{display:flex;align-items:center;gap:7px;cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--ink-soft)}.method-opt input[type=radio]{accent-color:var(--seal)}
+.badge{font-size:10px;letter-spacing:.06em;text-transform:uppercase;background:var(--seal-tint);color:var(--seal);border:1px solid rgba(168,122,10,.2);border-radius:99px;padding:2px 7px;vertical-align:middle;margin-left:4px}
+.setup-note{background:var(--seal-tint);border:1px solid rgba(168,122,10,.2);border-radius:10px;padding:14px 16px}.setup-title{font-weight:600;font-size:14px;margin-bottom:4px}.setup-body{font-size:13px;color:var(--ink-soft);margin:0}.setup-foot{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.5}
+.store-links{display:flex;gap:8px;margin-top:10px}.store-btn{font-family:var(--mono);font-size:12px;padding:7px 14px;border-radius:7px;background:#fff;border:1px solid var(--line);color:var(--ink);text-decoration:none;display:inline-block}.store-btn:hover{border-color:#d2d6e0}
 .sub{font-size:13px;color:var(--muted)}.foot{font-family:var(--mono);font-size:12px;color:var(--muted)}
 .tl{list-style:none;padding:0;margin:0;font-family:var(--mono);font-size:13px}
 .tl li{display:flex;gap:13px;padding:10px 0;align-items:flex-start;position:relative}
@@ -802,8 +932,8 @@ pre{font-family:var(--mono);font-size:12px;color:var(--code-text);background:var
 </style></head><body>
 <div class="bar"><a class="brand" href="${ORIGIN}"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1"><circle cx="20" cy="20" r="15"/><circle cx="20" cy="20" r="11" stroke-opacity=".5"/><ellipse cx="20" cy="20" rx="15" ry="5" stroke-opacity=".5"/><ellipse cx="20" cy="20" rx="15" ry="5" stroke-opacity=".5" transform="rotate(60 20 20)"/><ellipse cx="20" cy="20" rx="15" ry="5" stroke-opacity=".5" transform="rotate(120 20 20)"/></svg><span>nominee</span></a><span class="tag">live testbed</span></div>
 <div class="wrap">
-<h1>An agent that pauses, emails you, and survives the wait.</h1>
-<div class="steps"><b>connect GitHub</b> → agent reads your account → <b>pauses + emails you</b> → you approve from your phone → <b>fresh token from Token Vault</b> at action time → real action + audit</div>
+<h1>An agent that pauses for your approval — and survives the wait.</h1>
+<div class="steps"><b>connect GitHub</b> → agent reads your account → <b>pauses and notifies you</b> → you approve (email or phone) → <b>fresh token from Token Vault</b> at action time → real action + audit</div>
 ${inner}
 <p class="foot" style="margin-top:28px;text-align:center"><a href="${ORIGIN}" style="color:var(--muted)">← nominee.dev</a> · <a href="https://github.com/bharath31/nominee" style="color:var(--muted)">source ↗</a></p>
 </div>
@@ -820,12 +950,22 @@ function fmt(ms){const d=new Date(ms);return d.toLocaleTimeString([], {hour:'2-d
 function gap(from,to){let s=Math.max(0,Math.round((to-from)/1000));if(s<60)return s+'s';let m=Math.floor(s/60);return m<60?m+'m '+(s%60)+'s':Math.floor(m/60)+'h '+(m%60)+'m'}
 const ICON={started:['●','ac'],gather:['✓','ok'],draft:['✎','ac'],paused:['⏸','wait'],resumed:['▸','ok'],token:['↻','ac'],acted:['✓','ok'],error:['✗','er']}
 
+document.querySelectorAll('input[name=method]').forEach(r=>{
+  r.addEventListener('change',()=>{
+    const isCiba=document.querySelector('input[name=method]:checked')?.value==='ciba'
+    $('#email-wrap').style.display=isCiba?'none':''
+    $('#push-wrap').style.display=isCiba?'':'none'
+  })
+})
+
 $('#run').onclick=start
 async function start(){
-  const topic=$('#topic').value.trim(),email=$('#email').value.trim()
-  if(!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email)){$('#status').textContent='enter a valid email';return}
+  const topic=$('#topic').value.trim()
+  const method=document.querySelector('input[name=method]:checked')?.value||'email'
+  const email=method==='email'?($('#email').value.trim()):''
+  if(method==='email'&&!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email)){$('#status').textContent='enter a valid email';return}
   $('#run').disabled=true;$('#status').innerHTML='<span class="pulse"></span> starting…'
-  const r=await fetch('/agent/session/start',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({topic,email})})
+  const r=await fetch('/agent/session/start',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({topic,email,method})})
   const res=await r.json()
   if(!res.ok){$('#run').disabled=false;$('#status').textContent=res.reason||'failed';return}
   sid=res.id;$('#status').textContent=''
@@ -846,7 +986,11 @@ function renderClock(){
 function render(){
   let banner='',clock=''
   if(J.status==='awaiting_approval'){
-    banner='<div class="banner wait"><b>Check your inbox.</b> The agent emailed an approval link to '+esc(J.email)+' and is now hibernating — no compute running. Approve from any device.</div>'
+    if(J.method==='ciba'){
+      banner='<div class="banner wait"><b>Check your phone.</b> A push notification was sent to your authenticator app. The agent is hibernating — it will wake the moment you approve.</div>'
+    } else {
+      banner='<div class="banner wait"><b>Check your inbox.</b> The agent emailed an approval link to '+esc(J.email||'')+' and is now hibernating — no compute running. Approve from any device.</div>'
+    }
     clock='<div class="clock" id="clock">⏸ hibernating — '+gap(J.pausedAt,Date.now())+' waiting for your approval</div>'
   } else if(J.status==='done'){
     banner='<div class="banner ok"><b>Done.</b> The agent resumed after the pause and acted with a token nominee fetched <i>at that moment</i> from Token Vault.</div>'
