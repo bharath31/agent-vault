@@ -207,12 +207,13 @@ export default {
           { status: 400 },
         )
       const claims = tok.id_token ? decodeJwt(tok.id_token) : {}
+      const prior = await getSession(request, env)
       const sess: Session = {
         sub: claims.sub ?? 'user',
         name: claims.name ?? claims.nickname,
         email: claims.email,
         refreshToken: tok.refresh_token,
-        vaulted: false,
+        vaulted: prior?.vaulted ?? false,
       }
       return setSession(env, sess, `${ORIGIN}/agent`)
     }
