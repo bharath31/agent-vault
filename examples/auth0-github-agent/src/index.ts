@@ -343,7 +343,11 @@ export default {
     if (request.method === 'POST' && path.endsWith('/session/start')) {
       if (!session) return json({ ok: false, reason: 'not_logged_in' }, 401)
       if (!session.vaulted) return json({ ok: false, reason: 'not_connected' }, 403)
-      const b = (await request.json().catch(() => ({}))) as { topic?: string; email?: string; method?: string }
+      const b = (await request.json().catch(() => ({}))) as {
+        topic?: string
+        email?: string
+        method?: string
+      }
       const topic = cleanTopic(b.topic)
       if (!topic) return json({ ok: false, reason: 'invalid_topic' }, 400)
       const method: 'email' | 'ciba' = b.method === 'ciba' ? 'ciba' : 'email'
@@ -511,9 +515,10 @@ export class AgentSession {
     s.steps.push({
       kind: 'paused',
       at: s.pausedAt,
-      text: s.method === 'ciba'
-        ? 'paused — Auth0 Guardian push sent. Agent is hibernating; it will wake when you approve on your phone.'
-        : `paused — approval link emailed to ${s.email}. Agent is hibernating; it will resume when you approve.`,
+      text:
+        s.method === 'ciba'
+          ? 'paused — Auth0 Guardian push sent. Agent is hibernating; it will wake when you approve on your phone.'
+          : `paused — approval link emailed to ${s.email}. Agent is hibernating; it will resume when you approve.`,
     })
 
     await this.save(s)
@@ -598,7 +603,10 @@ export class AgentSession {
       const msg = `Approve: publish a gist — ${s.topic.slice(0, 50)}`
       const authRes = await fetch(`https://${this.env.AUTH0_DOMAIN}/bc-authorize`, {
         method: 'POST',
-        headers: { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' },
+        headers: {
+          'content-type': 'application/x-www-form-urlencoded',
+          accept: 'application/json',
+        },
         body: new URLSearchParams({
           client_id: this.env.AUTH0_CLIENT_ID,
           client_secret: this.env.AUTH0_CLIENT_SECRET,
@@ -611,7 +619,11 @@ export class AgentSession {
         const text = await authRes.text().catch(() => '')
         throw new Error(`bc-authorize failed (${authRes.status}) ${text}`)
       }
-      const auth = (await authRes.json()) as { auth_req_id: string; expires_in?: number; interval?: number }
+      const auth = (await authRes.json()) as {
+        auth_req_id: string
+        expires_in?: number
+        interval?: number
+      }
       s.cibaReqId = auth.auth_req_id
       await this.save(s)
       await this.state.storage.setAlarm(Date.now() + (auth.interval ?? 5) * 1000)
@@ -631,7 +643,10 @@ export class AgentSession {
     try {
       const pollRes = await fetch(`https://${this.env.AUTH0_DOMAIN}/oauth/token`, {
         method: 'POST',
-        headers: { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' },
+        headers: {
+          'content-type': 'application/x-www-form-urlencoded',
+          accept: 'application/json',
+        },
         body: new URLSearchParams({
           grant_type: 'urn:openid:params:grant-type:ciba',
           auth_req_id: s.cibaReqId,
@@ -662,14 +677,18 @@ export class AgentSession {
         s.steps.push({
           kind: 'resumed',
           at: s.resumedAt,
-          text: `you denied via Auth0 Guardian — agent stayed paused and took no action`,
+          text: 'you denied via Auth0 Guardian — agent stayed paused and took no action',
         })
         await this.save(s)
         return
       }
       if (err.error === 'expired_token') {
         s.status = 'error'
-        s.steps.push({ kind: 'error', at: Date.now(), text: 'CIBA request expired — Guardian notification went unanswered' })
+        s.steps.push({
+          kind: 'error',
+          at: Date.now(),
+          text: 'CIBA request expired — Guardian notification went unanswered',
+        })
         await this.save(s)
         return
       }
