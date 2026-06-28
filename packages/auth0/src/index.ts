@@ -149,7 +149,13 @@ export function Auth0(options: Auth0Options): Strategy {
       )
     }
 
-    const loginHint = ciba.loginHint ? await ciba.loginHint(params.user) : params.user
+    const rawHint = ciba.loginHint ? await ciba.loginHint(params.user) : params.user
+    // Auth0 CIBA requires `login_hint` as an `iss_sub` JSON object, not a bare
+    // subject. Accept a pre-built JSON string (passed through as-is) or wrap a
+    // plain subject — so callers can just return the user's `sub`.
+    const loginHint = rawHint.trim().startsWith('{')
+      ? rawHint
+      : JSON.stringify({ format: 'iss_sub', iss: `${base}/`, sub: rawHint })
     const bindingMessage = ciba.bindingMessage
       ? await ciba.bindingMessage(params)
       : `Approve: ${params.action}`
