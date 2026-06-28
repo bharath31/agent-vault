@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "site/**"
+      - "!site/agent-worker/**" # the Worker has its own deploy-worker.yml
       - ".github/workflows/deploy-site.yml"
   workflow_dispatch:
 

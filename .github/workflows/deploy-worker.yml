@@ -1,0 +1,33 @@
+name: Deploy agent worker
+
+# Deploys the live demo backend (site/agent-worker → the `nominee-agent-demo`
+# Cloudflare Worker serving nominee.dev/agent*). The static site has its own
+# workflow (deploy-site.yml, Cloudflare Pages); this one handles the Worker,
+# which Pages deploys do NOT touch.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/agent-worker/**"
+      - ".github/workflows/deploy-worker.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Deploy worker
+        if: ${{ env.CLOUDFLARE_API_TOKEN != '' }}
+        working-directory: site/agent-worker
+        run: npx --yes wrangler@4 deploy
+      - name: Note missing token
+        if: ${{ env.CLOUDFLARE_API_TOKEN == '' }}
+        run: echo "::warning::Set the CLOUDFLARE_API_TOKEN repo secret (with Workers Scripts: Edit) to enable worker auto-deploy."
