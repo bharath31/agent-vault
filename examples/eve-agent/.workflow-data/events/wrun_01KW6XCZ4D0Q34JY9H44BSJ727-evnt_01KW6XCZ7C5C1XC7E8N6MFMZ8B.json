@@ -1,0 +1,13 @@
+{
+  "eventType": "run_completed",
+  "specVersion": 5,
+  "eventData": {
+    "output": {
+      "__type": "Uint8Array",
+      "data": "ZGV2bC0x"
+    }
+  },
+  "runId": "wrun_01KW6XCZ4D0Q34JY9H44BSJ727",
+  "eventId": "evnt_01KW6XCZ7C5C1XC7E8N6MFMZ8B",
+  "createdAt": "2026-06-28T10:46:28.332Z"
+}

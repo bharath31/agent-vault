@@ -1,0 +1,24 @@
+{
+  "name": "github-agent",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Golden nominee example — an Eve PR review-and-merge agent on Auth0 Token Vault + CIBA",
+  "scripts": {
+    "dev": "eve dev",
+    "setup": "node setup.mjs"
+  },
+  "dependencies": {
+    "nominee": "workspace:*",
+    "nominee-eve": "workspace:*",
+    "nominee-auth0": "workspace:*",
+    "eve": "^0.11.7",
+    "ai": "7.0.0-beta.178",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.21",
+    "tsx": "^4.22.4",
+    "typescript": "^5.9.3"
+  }
+}

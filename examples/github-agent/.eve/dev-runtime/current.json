@@ -1,0 +1,7 @@
+{
+  "appRoot": "/Users/bharath/dev/nominee/examples/github-agent",
+  "kind": "eve-dev-runtime-artifacts-pointer",
+  "runtimeAppRoot": "/Users/bharath/dev/nominee/examples/github-agent/.eve/dev-runtime/snapshots/mqxp6wec-d3b1705d-d536-4917-b20c-0bf0686cc8e0/source/examples/github-agent",
+  "snapshotRoot": "/Users/bharath/dev/nominee/examples/github-agent/.eve/dev-runtime/snapshots/mqxp6wec-d3b1705d-d536-4917-b20c-0bf0686cc8e0",
+  "version": 2
+}

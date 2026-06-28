@@ -1,0 +1,140 @@
+{
+  "agentRoot": "/Users/bharath/dev/nominee/examples/github-agent/.eve/dev-runtime/snapshots/mqxp6wec-d3b1705d-d536-4917-b20c-0bf0686cc8e0/source/examples/github-agent/agent",
+  "appRoot": "/Users/bharath/dev/nominee/examples/github-agent/.eve/dev-runtime/snapshots/mqxp6wec-d3b1705d-d536-4917-b20c-0bf0686cc8e0/source/examples/github-agent",
+  "channels": [],
+  "connections": [],
+  "config": {
+    "compaction": {},
+    "model": {
+      "id": "anthropic/claude-sonnet-4.6",
+      "routing": {
+        "kind": "gateway",
+        "target": "anthropic"
+      },
+      "contextWindowTokens": 1000000
+    },
+    "name": "github-agent",
+    "source": {
+      "sourceKind": "module",
+      "logicalPath": "agent.ts",
+      "sourceId": "agent.ts"
+    }
+  },
+  "diagnosticsSummary": {
+    "errors": 0,
+    "warnings": 0
+  },
+  "disabledFrameworkTools": [],
+  "workflowEnabled": false,
+  "dynamicInstructions": [],
+  "dynamicSkills": [],
+  "dynamicTools": [],
+  "hooks": [],
+  "remoteAgents": [],
+  "sandbox": null,
+  "sandboxWorkspaces": [],
+  "schedules": [],
+  "skills": [],
+  "tools": [
+    {
+      "description": "Merge a pull request WITH nominee (fresh token + human approval).",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string"
+          },
+          "repo": {
+            "type": "string"
+          },
+          "number": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "number"
+        ]
+      },
+      "logicalPath": "tools/merge_pr.ts",
+      "name": "merge_pr",
+      "sourceId": "tools/merge_pr.ts",
+      "sourceKind": "module"
+    },
+    {
+      "description": "Merge a pull request WITHOUT nominee (hand-rolled token handling).",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string"
+          },
+          "repo": {
+            "type": "string"
+          },
+          "number": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "number"
+        ]
+      },
+      "logicalPath": "tools/merge_pr_naive.ts",
+      "name": "merge_pr_naive",
+      "sourceId": "tools/merge_pr_naive.ts",
+      "sourceKind": "module"
+    },
+    {
+      "description": "Read a pull request: title, diff size, and CI status.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Repo owner, e.g. \"octocat\""
+          },
+          "repo": {
+            "type": "string",
+            "description": "Repo name, e.g. \"hello-world\""
+          },
+          "number": {
+            "type": "number",
+            "description": "PR number"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "number"
+        ]
+      },
+      "logicalPath": "tools/review_pr.ts",
+      "name": "review_pr",
+      "sourceId": "tools/review_pr.ts",
+      "sourceKind": "module"
+    }
+  ],
+  "workspaceResourceRoot": {
+    "contentHash": "5777dd4d87493e836b5597e87f6b3d07482c551341171ea7836996b231207c7b",
+    "logicalPath": "workspace-resources/__root__",
+    "rootEntries": []
+  },
+  "instructions": {
+    "name": "instructions",
+    "logicalPath": "instructions.md",
+    "markdown": "You are a GitHub pull-request agent. You can review a PR and merge it.\n\nThere are two ways to merge, and the user chooses which to try:\n\n- If the user says \"**without nominee**\", call `merge_pr_naive`. This is the\n  hand-rolled approach; it may fail with a stale token — report the failure\n  plainly, do not retry or work around it. That failure is the point.\n- If the user says \"**with nominee**\" (or just \"merge\"), call `merge_pr`.\n\nAlways `review_pr` first if you have not seen the PR. When merging pauses for\napproval, that is expected — wait for it. Report each result exactly as the\ntool returns it, including the merge URL or the error.\n",
+    "sourceId": "instructions.md",
+    "sourceKind": "markdown"
+  },
+  "kind": "eve-agent-compiled-manifest",
+  "subagentEdges": [],
+  "subagents": [],
+  "version": 29
+}

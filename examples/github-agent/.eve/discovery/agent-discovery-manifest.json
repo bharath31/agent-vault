@@ -1,0 +1,52 @@
+{
+  "agentId": "github-agent",
+  "agentRoot": "/Users/bharath/dev/nominee/examples/github-agent/agent",
+  "appRoot": "/Users/bharath/dev/nominee/examples/github-agent",
+  "channels": [],
+  "connections": [],
+  "diagnosticsSummary": {
+    "errors": 0,
+    "warnings": 0
+  },
+  "hooks": [],
+  "instructions": [
+    {
+      "definition": {
+        "markdown": "You are a GitHub pull-request agent. You can review a PR and merge it.\n\nThere are two ways to merge, and the user chooses which to try:\n\n- If the user says \"**without nominee**\", call `merge_pr_naive`. This is the\n  hand-rolled approach; it may fail with a stale token — report the failure\n  plainly, do not retry or work around it. That failure is the point.\n- If the user says \"**with nominee**\" (or just \"merge\"), call `merge_pr`.\n\nAlways `review_pr` first if you have not seen the PR. When merging pauses for\napproval, that is expected — wait for it. Report each result exactly as the\ntool returns it, including the merge URL or the error.\n"
+      },
+      "sourceKind": "markdown",
+      "logicalPath": "instructions.md",
+      "sourceId": "instructions.md"
+    }
+  ],
+  "lib": [],
+  "kind": "eve-agent-discovery-manifest",
+  "sandbox": null,
+  "sandboxWorkspaces": [],
+  "schedules": [],
+  "skills": [],
+  "tools": [
+    {
+      "sourceKind": "module",
+      "logicalPath": "tools/merge_pr.ts",
+      "sourceId": "tools/merge_pr.ts"
+    },
+    {
+      "sourceKind": "module",
+      "logicalPath": "tools/merge_pr_naive.ts",
+      "sourceId": "tools/merge_pr_naive.ts"
+    },
+    {
+      "sourceKind": "module",
+      "logicalPath": "tools/review_pr.ts",
+      "sourceId": "tools/review_pr.ts"
+    }
+  ],
+  "version": 12,
+  "subagents": [],
+  "configModule": {
+    "sourceKind": "module",
+    "logicalPath": "agent.ts",
+    "sourceId": "agent.ts"
+  }
+}

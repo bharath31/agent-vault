@@ -1,0 +1,76 @@
+{
+  "agentRoot": "/Users/bharath/dev/nominee/examples/eve-agent/.eve/dev-runtime/snapshots/mqxpbm2t-c6a5cfab-ed58-4ce0-831f-5cf15512a974/source/examples/eve-agent/agent",
+  "appRoot": "/Users/bharath/dev/nominee/examples/eve-agent/.eve/dev-runtime/snapshots/mqxpbm2t-c6a5cfab-ed58-4ce0-831f-5cf15512a974/source/examples/eve-agent",
+  "channels": [],
+  "connections": [],
+  "config": {
+    "compaction": {},
+    "model": {
+      "id": "openai/gpt-5.4-mini",
+      "routing": {
+        "kind": "gateway",
+        "target": "openai"
+      },
+      "contextWindowTokens": 400000
+    },
+    "name": "eve-agent",
+    "source": {
+      "sourceKind": "module",
+      "logicalPath": "agent.ts",
+      "sourceId": "agent.ts"
+    }
+  },
+  "diagnosticsSummary": {
+    "errors": 0,
+    "warnings": 0
+  },
+  "disabledFrameworkTools": [],
+  "workflowEnabled": false,
+  "dynamicInstructions": [],
+  "dynamicSkills": [],
+  "dynamicTools": [],
+  "hooks": [],
+  "remoteAgents": [],
+  "sandbox": null,
+  "sandboxWorkspaces": [],
+  "schedules": [],
+  "skills": [],
+  "tools": [
+    {
+      "description": "Star a GitHub repository",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "repo": {
+            "type": "string",
+            "description": "The repository name, e.g. vercel/ai"
+          }
+        },
+        "required": [
+          "repo"
+        ]
+      },
+      "logicalPath": "tools/star_repo.ts",
+      "name": "star_repo",
+      "sourceId": "tools/star_repo.ts",
+      "sourceKind": "module"
+    }
+  ],
+  "workspaceResourceRoot": {
+    "contentHash": "5777dd4d87493e836b5597e87f6b3d07482c551341171ea7836996b231207c7b",
+    "logicalPath": "workspace-resources/__root__",
+    "rootEntries": []
+  },
+  "instructions": {
+    "name": "instructions",
+    "logicalPath": "instructions.md",
+    "markdown": "You are a helpful GitHub assistant.\n\nWhen the user asks to star a repository, call the `star_repo` tool with the\nrepository name (e.g. `vercel/ai`). The tool fetches a fresh GitHub token and\npauses for human approval before it acts — that's expected, don't try to work\naround it. Report the result plainly when it completes.\n",
+    "sourceId": "instructions.md",
+    "sourceKind": "markdown"
+  },
+  "kind": "eve-agent-compiled-manifest",
+  "subagentEdges": [],
+  "subagents": [],
+  "version": 29
+}

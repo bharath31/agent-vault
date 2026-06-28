@@ -1,0 +1,29 @@
+{
+  "eventType": "attr_set",
+  "specVersion": 5,
+  "eventData": {
+    "changes": [
+      {
+        "key": "$eve.type",
+        "value": "session"
+      },
+      {
+        "key": "$eve.trigger",
+        "value": "http"
+      },
+      {
+        "key": "$eve.title",
+        "value": "star vercel/ai"
+      }
+    ],
+    "writer": {
+      "type": "step",
+      "stepId": "step_01KW6XCZ3EPX644BG89PMV5HT3",
+      "attempt": 1
+    },
+    "allowReservedAttributes": true
+  },
+  "runId": "wrun_01KW6XCZ37ZRADEF7NQTHJ7C1R",
+  "eventId": "evnt_01KW6XCZ423G012YJ4ZEHWRAWD",
+  "createdAt": "2026-06-28T10:46:28.226Z"
+}

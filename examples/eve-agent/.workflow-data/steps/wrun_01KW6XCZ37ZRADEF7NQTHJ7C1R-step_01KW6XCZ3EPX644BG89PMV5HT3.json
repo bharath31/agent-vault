@@ -1,0 +1,20 @@
+{
+  "runId": "wrun_01KW6XCZ37ZRADEF7NQTHJ7C1R",
+  "stepId": "step_01KW6XCZ3EPX644BG89PMV5HT3",
+  "stepName": "step//eve@0.11.7//createSessionStep",
+  "status": "completed",
+  "input": {
+    "__type": "Uint8Array",
+    "data": "enN0ZCi1L/1gxAOtFgDG8I8k8FT1aE38ML0oMBCLtlSpnUU4qQP3N4mjY5tpWDqczoFn4JnSgQCFAIkAE2RJZwc7CfLXCqFpzSPuIkGX3fMgP4g/rQPSRSbW0/qldd7rEV+r7cyvGPGb9ltlJxFcVsquguwbfa8z/KbRyW4CmXpHlaB1fm90Pq2RXQTZo91qxP3YGvOtgHRsalmNPOIyIAx3wZrizuvZPQbytU3hdrsVi+we5Lthm0cwMIvLWgeE2PfMMX/qWqVUqOa95qFkGtUa51a4407Jjq8zmUiP4jN58pEYSAI1Y0lLYjo+kmnL+1FvYr6aLBTEI3Pu1+tqTa/j2Xy6WcYt3jhPfaMZt7hzHdOyBnHHnc6sUsfi0rm+bV+Wc63fCYfdhRIAqZakfdlJIF/fDtZl1wWtGRzbZM3YBeyYpJvVjDie7WAerVsAbP9lxxIkUZZERc/qh4kkr2IqjUliNLyKmKei2pqshm7xy9FgjNYZw0i39fqtHayp9afTifY6f2ckPRY0vUmUpkpiPfGJfJKgWEVLY5JWnCoUC/WvshI1TyNRbMvZUa9YqUSN1EgUWUUqE+o1/W4xT/M0FGV25TVV8ygzGQzxBqiEA4mHBsqggEAA4oKKLgYsJBUK76nQzX6w882+u0QQZIS/vnm4tbhksI4Vu7gWIoG1NiOdVmP3IMhxPnV2z2/WtP99rVse5P6W/Z6xk4w41v4vdhfpoxdBhiBfnz+xabXWUcDW7/mTzupBnsiaTQ/yU882+5ciQA8y5pT2Fd17MDkgIAIiUAppeS8k+NZxnu9aLaIOEH7UJPGmh+PsAgbZotO6V7gLUBVgvwQI0irSPFCwOG7/69iFhDGyAZaKA3lNwHC3ak/PGQpAATCXY0wvAH/9YCgJOraIen56CQlq8FtE4gfaEMNTUbRhRsTL6gdyTrNND1kKy3Z2s8kMwUhn7MDuvSCbhI0RyFw8GmEOAwiKHg=="
+  },
+  "attempt": 1,
+  "startedAt": "2026-06-28T10:46:28.223Z",
+  "createdAt": "2026-06-28T10:46:28.221Z",
+  "updatedAt": "2026-06-28T10:46:28.227Z",
+  "specVersion": 5,
+  "output": {
+    "__type": "Uint8Array",
+    "data": "enN0ZCi1L/1gAAOFFAA2bIM2cGnTAfz/////rt5T2yZCZIrUOxOxQ/bfae9NBSQzlNZGBKViTYFs3peQzLrZNtxoXldS/b8XewB7AHAAPLn2nTWHiO3EGyFQ+1B/IqMxSAMkIkEiD0hSR+PxAEkaksoB0qhW8mg4JBGVHCSNNrOsdSQR+7b8UnbWAkQMboa1SMSoyTprkIj5+0YIS/l48YSzaajA1WLtMcHt3B1mWWuIGC9GV7jda2T33BPLaB0oYvv6zjIsXmapC1MT6nv2p2O4JlyPudYnr0XBFrY8z/ru3DWlKPGuQL5YXW+t1FyoGbsBWxjcQvoU4TtPWOs0QBHD7DvHH1DEOLDfndUgKGLPe6EOKGJQYxQoImJAorIAQYTAAAEQlIrIoyKCwQPFAcjxgCPUsMZYc7T1p1XrPMD4m6UC+S/6wod9LSWfd0lxbKhswYCt4cDPV+CmslH7016bTVd4tT4lRJiQ/pPmu1zY1Ur5NNPwujRZMdFK2FX6etSLLRRrvuULq9T0tabfaq1KPgwXpwDeTnAzl3wunl3IxSgnW6x3mnzdn5cHl/d0yua8rw4cWDT2uINrfXdy3sL85vRtKilWdwnyefueQr3SNa3pVUp/Xfi5mc22zn35Qnbp/rqf4r2WYpf7LvcvYmJzsprkw+2eOriey52u6RyhFD1hvwt2nhBs4XYfp91sxff3XZieeC1Nch47fVcyICACIkDO5Q2HCa5lOBMNpmJewgV2/jScMSoEeECVGOpcwKfdpkK2Zp2IXcrxWodg8VhvbvE8g20TK+6zEytEREMdETYKrAhS0xt5ZlvbptMEaJfd1US4TDAytpiDrsAh2be8UCQWEOEk2hYavA2RYC6z+Sbo/dF4gXZeJ22YUA=="
+  },
+  "completedAt": "2026-06-28T10:46:28.227Z"
+}
