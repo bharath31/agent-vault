@@ -1,6 +1,6 @@
 {
   "name": "nominee-supabase",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Supabase strategy for nominee — read and refresh provider tokens stored in Supabase for AI agents",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -33,7 +33,7 @@
     "access": "public"
   },
   "peerDependencies": {
-    "nominee": ">=2.0.0"
+    "nominee": ">=2.0.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
