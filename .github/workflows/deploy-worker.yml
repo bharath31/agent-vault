@@ -18,7 +18,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      # wrangler reads CLOUDFLARE_API_TOKEN; we feed it the Workers-scoped token
+      # (the Pages token lives in CLOUDFLARE_API_TOKEN, used by deploy-site.yml).
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_WORKERS_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
       - uses: actions/checkout@v4
@@ -34,4 +36,4 @@ jobs:
         run: cd site/agent-worker && npx --yes wrangler@4 deploy
       - name: Note missing token
         if: ${{ env.CLOUDFLARE_API_TOKEN == '' }}
-        run: echo "::warning::Set the CLOUDFLARE_API_TOKEN repo secret with Workers Scripts Edit to enable worker auto-deploy."
+        run: echo "::warning::Set the CLOUDFLARE_WORKERS_API_TOKEN repo secret with Workers Scripts Edit to enable worker auto-deploy."
