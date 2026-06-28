@@ -9,7 +9,7 @@ reports seriously and respond quickly.
 
 Report privately through GitHub's [private vulnerability reporting](https://github.com/bharath31/nominee/security/advisories/new)
 (Security → Report a vulnerability). If you can't use that, email
-**security@bharath.sh** with details and we'll coordinate from there.
+**security@nominee.dev** with details and we'll coordinate from there.
 
 Please include:
 
