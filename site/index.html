@@ -200,7 +200,7 @@
 <span class="c">// everything below is identical, whatever the strategy ↓</span>
 <span class="k">const</span> token = <span class="k">await</span> nominee.<span class="fn">token</span>({ user, connection: <span class="s">'github'</span> })</code></pre>
             <pre data-panel="auth0" hidden><code><span class="k">const</span> nominee = <span class="k">new</span> <span class="t">Nominee</span>({
-  strategy: <span class="fn">Auth0</span>({ domain, clientId, clientSecret, subjectToken }), <span class="c">// managed Token Vault + CIBA</span>
+  strategy: <span class="fn">Auth0</span>({ domain, clientId, clientSecret, subjectToken, ciba }), <span class="c">// managed Token Vault + CIBA</span>
 })
 <span class="c">// everything below is identical, whatever the strategy ↓</span>
 <span class="k">const</span> token = <span class="k">await</span> nominee.<span class="fn">token</span>({ user, connection: <span class="s">'github'</span> })</code></pre>

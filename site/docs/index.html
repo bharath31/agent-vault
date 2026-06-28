@@ -96,6 +96,11 @@ const token = await nominee.token({ user: 'alice', connection: 'github' })</code
             agent state. Call <code>nominee.token()</code> at the moment of the call —
             that's what survives long-running and durable execution.
           </p>
+          <p>
+            Don't want to bring your own tokens? Let Auth0 manage Token Vault + push
+            approvals — also one line: <code>new Nominee({ strategy: auth0() })</code>.
+            See <a href="#auth0">Auth0</a>.
+          </p>
         </section>
 
         <section id="strategies" class="doc-section">
@@ -173,7 +178,16 @@ const starRepo = nomineeTool({
 
         <section id="auth0" class="doc-section">
           <h2>Auth0 (optional managed upgrade)</h2>
-          <p>Same API — swap the strategy to get managed Token Vault tokens and CIBA phone approvals, with no change to your agent code.</p>
+          <p>Same API — swap the strategy to get managed Token Vault tokens and CIBA phone approvals, with no change to your agent code. For a single-tenant setup, that's <em>one line</em>: <code>auth0()</code> reads everything from the environment.</p>
+          <pre><code>import { Nominee } from 'nominee'
+import { auth0 } from 'nominee-auth0'
+
+// reads AUTH0_DOMAIN / CLIENT_ID / CLIENT_SECRET / REFRESH_TOKEN / USER_SUB
+const nominee = new Nominee({ strategy: auth0() })   // managed Token Vault + CIBA
+
+const token = await nominee.token({ user, connection: 'github' }) // always fresh</code></pre>
+          <p>Unconfigured, <code>auth0()</code> falls back to a built-in mock (short-TTL token + auto-approve) so examples run with zero setup — set the env and the <em>same call</em> becomes real, no code change.</p>
+          <p>Need per-request <code>subjectToken</code>, multi-tenancy, or custom CIBA options? Use the explicit <code>Auth0({ … })</code> form:</p>
           <pre><code>import { Nominee } from 'nominee'
 import { Auth0 } from 'nominee-auth0'
 

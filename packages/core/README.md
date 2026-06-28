@@ -206,7 +206,7 @@ new Nominee({
 await nominee.token({ user: string, connection: string })
 
 // Gate on human approval. Throws ApprovalDeniedError if denied or expired.
-await nominee.approve({ user: string, action: string, detail?: string })
+await nominee.approve({ user: string, action: string, detail?: unknown })
 
 // Settle an approval from your webhook
 nominee.resolveApproval(id: string, decision: 'approved' | 'denied')
