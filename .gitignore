@@ -9,6 +9,9 @@ coverage/
 *.tsbuildinfo
 INTERNAL_NOTES.md
 marketing_plan.md
+
+# Superpowers planning notes — local only, never committed
+docs/superpowers/
 PROGRESS.md
 AGENTS.local.md
 PROGRESS.local.md
@@ -16,6 +19,10 @@ PROGRESS.local.md
 launch/
 
 .wrangler/
+
+# Eve dev/build artifacts
+.eve/
+.workflow-data/
 
 # transient secret-staging files
 *.rk.tmp

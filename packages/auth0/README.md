@@ -79,6 +79,34 @@ const token = await nominee.token({
 
 ---
 
+## Zero-config — `auth0()`
+
+For the common single-tenant setup, skip the options entirely. The lowercase
+`auth0()` reads everything from the environment:
+
+```ts
+import { Nominee } from 'nominee'
+import { auth0 } from 'nominee-auth0'
+
+const nominee = new Nominee({ strategy: auth0() })
+```
+
+It reads `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_CLIENT_SECRET`,
+`AUTH0_REFRESH_TOKEN` (the subject token), and `AUTH0_USER_SUB` (CIBA
+`login_hint`, enabling push approvals when present).
+
+When the core Auth0 vars are **absent**, `auth0()` transparently falls back to a
+built-in **mock** (a short-TTL token + auto-approve) so an example or test runs
+with zero setup. Set the env (e.g. via an example's `pnpm setup`) and the *same
+call* becomes real Token Vault + CIBA — no code change. A half-set env throws an
+actionable error rather than silently mocking.
+
+This is config-code compression, not "zero config": you still provision the
+tenant once. Use the explicit `Auth0({...})` form above when you need
+per-request `subjectToken`, multi-tenancy, or custom CIBA options.
+
+---
+
 ## CIBA — Push Approvals
 
 Require human approval before an agent action, delivered as a push notification to the user's phone:

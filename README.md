@@ -30,6 +30,11 @@
   <em>▶ <a href="https://nominee.dev">Watch it live at nominee.dev</a></em>
 </p>
 
+<p align="center">
+  <strong>Want to run it yourself?</strong> The <a href="examples/github-agent">github-agent example</a> is a real
+  PR-merge agent where <code>merge pr</code> fails on a stale token and <code>merge with nominee</code> just works.
+</p>
+
 ---
 
 ## The Problem

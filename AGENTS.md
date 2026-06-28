@@ -27,11 +27,10 @@ packages/
   eve/    published as nominee-eve    - Vercel Eve adapter
   auth0/  published as nominee-auth0  - optional Auth0 strategy
 examples/
-  standalone-node/
-  vercel-ai-github/
-  eve-agent/
+  github-agent/   golden Eve + Auth0 example (PR review-and-merge agent)
 site/
   static microsite for nominee.dev
+  agent-worker/   deployed nominee.dev/agent worker (Cloudflare Durable Object)
 ```
 
 ## Public API Shape

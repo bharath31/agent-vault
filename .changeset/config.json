@@ -7,5 +7,5 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["standalone-node", "vercel-ai-github", "eve-agent"]
+  "ignore": ["github-agent", "auth0-github-agent"]
 }

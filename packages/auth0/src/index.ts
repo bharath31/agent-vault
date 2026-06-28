@@ -8,6 +8,9 @@ const SUBJECT_REFRESH = 'urn:ietf:params:oauth:token-type:refresh_token'
 const SUBJECT_ACCESS = 'urn:ietf:params:oauth:token-type:access_token'
 const CIBA_GRANT = 'urn:openid:params:grant-type:ciba'
 
+/** TTL of the built-in mock token (ms). Also the demo's compressed-expiry window. */
+export const MOCK_TTL_MS = 3000
+
 export interface Auth0CibaOptions {
   /**
    * Map a nominee user id to an Auth0 `login_hint` (typically the user's `sub`).
@@ -146,7 +149,13 @@ export function Auth0(options: Auth0Options): Strategy {
       )
     }
 
-    const loginHint = ciba.loginHint ? await ciba.loginHint(params.user) : params.user
+    const rawHint = ciba.loginHint ? await ciba.loginHint(params.user) : params.user
+    // Auth0 CIBA requires `login_hint` as an `iss_sub` JSON object, not a bare
+    // subject. Accept a pre-built JSON string (passed through as-is) or wrap a
+    // plain subject — so callers can just return the user's `sub`.
+    const loginHint = rawHint.trim().startsWith('{')
+      ? rawHint
+      : JSON.stringify({ format: 'iss_sub', iss: `${base}/`, sub: rawHint })
     const bindingMessage = ciba.bindingMessage
       ? await ciba.bindingMessage(params)
       : `Approve: ${params.action}`
@@ -211,4 +220,92 @@ export function Auth0(options: Auth0Options): Strategy {
   const strategy: Strategy = { name: 'auth0', getToken }
   if (options.ciba) strategy.requestApproval = requestApproval
   return strategy
+}
+
+export interface Auth0AutoOptions extends Partial<Auth0Options> {
+  /** Force mock mode regardless of env (used by tests/demos). Default: auto-detect. */
+  mock?: boolean
+  /** Env source. Default: `process.env`. */
+  env?: Record<string, string | undefined>
+}
+
+function mockStrategy(): Strategy {
+  return {
+    name: 'auth0-mock',
+    async getToken({ connection, user }: GetTokenParams): Promise<TokenResult> {
+      return { token: `mock-${connection}-token-for-${user}`, expiresAt: Date.now() + MOCK_TTL_MS }
+    },
+    async requestApproval(_params: ApprovalParams): Promise<ApprovalResult> {
+      // Simulate a CIBA push the user approves on their phone.
+      await sleep(1500)
+      return { id: `mock-${Date.now()}`, decision: 'approved' }
+    },
+  }
+}
+
+/**
+ * Zero-config Auth0 strategy. Reads `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`,
+ * `AUTH0_CLIENT_SECRET`, `AUTH0_REFRESH_TOKEN`, and `AUTH0_USER_SUB` from the
+ * environment. When the core creds are absent it transparently falls back to a
+ * built-in mock (short-TTL token + auto-approve) so an example runs with zero
+ * setup. Configure the env (e.g. via `pnpm setup`) and the *same call* becomes
+ * real Token Vault + CIBA — no code change.
+ *
+ * ```ts
+ * const nominee = new Nominee({ strategy: auth0() })
+ * ```
+ */
+export function auth0(options: Auth0AutoOptions = {}): Strategy {
+  const env = options.env ?? (typeof process !== 'undefined' ? process.env : {})
+  const domain = options.domain ?? env.AUTH0_DOMAIN
+  const clientId = options.clientId ?? env.AUTH0_CLIENT_ID
+  const clientSecret = options.clientSecret ?? env.AUTH0_CLIENT_SECRET
+
+  const present = [domain, clientId, clientSecret].filter(Boolean).length
+  const haveAll = present === 3
+
+  if (options.mock === true) return mockStrategy()
+
+  if (!haveAll) {
+    // A half-set env signals intent to run real — fail loudly instead of mocking.
+    if (present > 0) {
+      const missing = [
+        !domain && 'AUTH0_DOMAIN',
+        !clientId && 'AUTH0_CLIENT_ID',
+        !clientSecret && 'AUTH0_CLIENT_SECRET',
+      ]
+        .filter(Boolean)
+        .join(', ')
+      throw new Error(
+        `nominee-auth0: incomplete Auth0 config (missing ${missing}). Run \`pnpm setup\` to provision your tenant, or unset all AUTH0_* vars to use mock mode.`,
+      )
+    }
+    return mockStrategy()
+  }
+
+  // Real mode: resolve the subject (refresh) token + optional CIBA from env.
+  let subjectToken = options.subjectToken
+  if (!subjectToken) {
+    const rt = env.AUTH0_REFRESH_TOKEN
+    if (!rt) {
+      throw new Error(
+        'nominee-auth0: AUTH0_REFRESH_TOKEN is not set. Run `pnpm setup` to mint one (or pass subjectToken).',
+      )
+    }
+    subjectToken = () => rt
+  }
+
+  const ciba =
+    options.ciba ??
+    (env.AUTH0_USER_SUB ? { loginHint: () => env.AUTH0_USER_SUB as string } : undefined)
+
+  return Auth0({
+    domain: domain as string,
+    clientId: clientId as string,
+    clientSecret: clientSecret as string,
+    subjectToken,
+    ...(options.subjectTokenType ? { subjectTokenType: options.subjectTokenType } : {}),
+    ...(ciba ? { ciba } : {}),
+    ...(options.fetch ? { fetch: options.fetch } : {}),
+  })
 }
