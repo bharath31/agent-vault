@@ -1,6 +1,6 @@
 {
   "name": "nominee",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Identity and token delegation for AI agents — the provider-neutral auth layer for agents that act on your behalf",
   "type": "module",
   "main": "./dist/index.cjs",
