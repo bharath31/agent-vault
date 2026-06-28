@@ -36,8 +36,7 @@ const WITH_AUTH0 = process.argv.includes('--auth0')
 // Fail early with a clear message instead of a cryptic Eve/tsx crash later.
 if (Number(process.versions.node.split('.')[0]) < 24) {
   console.error(
-    `\nThis example needs Node 24+ (you have ${process.versions.node}).\n` +
-      'Run `nvm use` (or `nvm install 24`) in examples/github-agent, then retry.\n',
+    `\nThis example needs Node 24+ (you have ${process.versions.node}).\nRun \`nvm use\` (or \`nvm install 24\`) in examples/github-agent, then retry.\n`,
   )
   process.exit(1)
 }
