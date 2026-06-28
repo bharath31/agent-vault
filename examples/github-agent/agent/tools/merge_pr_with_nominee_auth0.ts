@@ -21,7 +21,7 @@ export default nomineeTool({
   approval: true, // nominee CIBA — pushes an approval to your phone
   action: 'github.merge_pr_with_nominee_auth0',
   description:
-    'Merge a pull request with nominee and Auth0 (Token Vault token + CIBA phone approval).',
+    'Merge a pull request using Auth0 Token Vault + CIBA. ONLY use when the user explicitly says "auth0" or "token vault" — not for a plain "with nominee" request.',
   inputSchema: z.object({
     owner: z.string(),
     repo: z.string(),

@@ -6,9 +6,15 @@ import { captureToken } from '../../lib/naive-session.js'
 
 // The plain "merge a PR" tool — the hand-rolled way most people write first.
 // It grabs a token up front, waits for approval, then acts with the token it
-// grabbed. The pause is time-compressed to a few seconds (a real agent waits
-// minutes or hours); by the time we merge, the captured token is stale → GitHub
-// 401. This is the problem nominee removes (see merge_pr_with_nominee).
+// grabbed.
+//
+// ⚠️  SIMULATED EXPIRY: a real GitHub token lives ~1 hour, and we can't make a
+// demo wait an hour for it to actually expire. So we COMPRESS TIME — the pause
+// is a few seconds and the captured token is *treated* as expired after
+// DEMO_TTL_MS. The resulting "401" is thrown by our own code (see lib/github.ts),
+// not returned by GitHub; the real token is still valid. It stands in for the
+// failure that would genuinely happen an hour into a paused agent session.
+// This is the problem nominee removes (see merge_pr_with_nominee).
 export default defineTool({
   description: 'Merge a pull request (the plain, hand-rolled way).',
   inputSchema: z.object({

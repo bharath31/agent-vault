@@ -232,8 +232,32 @@ function tenantDomain() {
 }
 
 // ── 5. GitHub social connection with Token Vault ────────────────────────────
-function githubConnection(appClientId, gh) {
-  step('Auth0 — GitHub connection with Token Vault')
+// The reliable path: REUSE an existing Token Vault-enabled `github` connection if
+// the tenant already has one (so we don't depend on getting a fresh connection's
+// Token Vault config exactly right). Only create one when none exists.
+function findGithubConnection() {
+  if (DRY_RUN) return null
+  const conns = shJson('auth0', ['api', 'get', 'connections'])
+  const list = Array.isArray(conns) ? conns : []
+  return list.find((conn) => conn.strategy === 'github') ?? null
+}
+
+function enableAppOnConnection(conn, appClientId) {
+  step('Auth0 — reuse existing GitHub Token Vault connection')
+  const enabled = new Set(conn.enabled_clients ?? [])
+  enabled.add(appClientId)
+  sh('auth0', [
+    'api',
+    'patch',
+    `connections/${conn.id}`,
+    '--data',
+    JSON.stringify({ enabled_clients: [...enabled] }),
+  ])
+  if (!DRY_RUN) ok(`Enabled this app on existing github connection "${conn.name}"`)
+}
+
+function createGithubConnection(appClientId, gh) {
+  step('Auth0 — create GitHub connection with Token Vault')
   const body = JSON.stringify({
     name: 'github',
     strategy: 'github',
@@ -249,27 +273,38 @@ function githubConnection(appClientId, gh) {
   try {
     sh('auth0', ['api', 'post', 'connections', '--data', body])
     if (!DRY_RUN) ok('GitHub connection created with Token Vault enabled')
-  } catch (e) {
+  } catch {
     warn(
-      'Could not create the connection automatically (it may already exist or need ' +
-        'Token Vault enabled in the dashboard). Configure it manually:\n' +
-        '      Auth0 Dashboard → Authentication → Social → GitHub →\n' +
-        '      enable Token Vault / Connected Accounts, scopes read:user + repo.',
+      'Could not create the github connection automatically. Enable Token Vault in the\n' +
+        '      dashboard (Authentication → Social → GitHub → Token Vault), then re-run.',
     )
   }
 }
 
-// ── 6. CIBA grant ───────────────────────────────────────────────────────────
-function enableCiba(appClientId) {
-  step('Auth0 — enable CIBA (human-in-the-loop approval)')
+// ── 6. grants (Token Vault federated exchange + CIBA) ────────────────────────
+// These two grants are what make Level 3 work, and BOTH are required:
+//   - the federated-connection token-exchange grant lets nominee pull a fresh
+//     GitHub token from Token Vault (`nominee.token`)
+//   - the CIBA grant lets nominee push the approval to your phone (`nominee.approve`)
+// (Verified against the working nominee.dev/agent app, which carries exactly these.)
+function enableGrants(appClientId) {
+  step('Auth0 — enable Token Vault + CIBA grants')
   const body = JSON.stringify({
-    grant_types: ['authorization_code', 'refresh_token', 'urn:openid:params:grant-type:ciba'],
+    grant_types: [
+      'authorization_code',
+      'refresh_token',
+      'client_credentials',
+      'urn:auth0:params:oauth:grant-type:token-exchange:federated-connection-access-token',
+      'urn:openid:params:grant-type:ciba',
+    ],
   })
   try {
     sh('auth0', ['api', 'patch', `clients/${appClientId}`, '--data', body])
-    if (!DRY_RUN) ok('CIBA grant enabled')
+    if (!DRY_RUN) ok('Token Vault (federated exchange) + CIBA grants enabled')
   } catch {
-    warn('Could not enable CIBA automatically — add the CIBA grant on the app in the dashboard.')
+    warn(
+      'Could not set grants automatically — add the federated-connection and CIBA grants in the dashboard.',
+    )
   }
 }
 
@@ -388,10 +423,17 @@ async function main() {
   // Level 3 — Auth0 Token Vault + CIBA. Only with --auth0.
   if (WITH_AUTH0) {
     const domain = tenantDomain()
-    const gh = await githubOAuthApp(domain)
     const { clientId, clientSecret } = auth0App()
-    githubConnection(clientId, gh)
-    enableCiba(clientId)
+    const existingConn = findGithubConnection()
+    if (existingConn) {
+      // Reuse the tenant's working Token Vault github connection.
+      enableAppOnConnection(existingConn, clientId)
+    } else {
+      // Fresh tenant: create the connection (needs a GitHub OAuth App).
+      const gh = await githubOAuthApp(domain)
+      createGithubConnection(clientId, gh)
+    }
+    enableGrants(clientId)
     const { refreshToken, sub } = await consent(domain, clientId, clientSecret)
     Object.assign(env, {
       AUTH0_DOMAIN: domain,

@@ -56,13 +56,23 @@ export async function getPR({
 /**
  * Merge a real pull request on GitHub.
  *
- * `capturedAtMs` is supplied ONLY by the naive (no-nominee) path. It models a
- * long-running agent that grabbed a token up front: we COMPRESS TIME — treat the
- * captured token as past its lifetime after DEMO_TTL_MS — so the stale-token
- * failure that would really happen ~1h later is visible in seconds. This time
- * compression is the demo's only simulation; the merge itself is a real GitHub
- * call. The nominee path never passes `capturedAtMs` (its token is fresh at call
- * time), so it always performs the real merge.
+ * ┌───────────────────────────────────────────────────────────────────────────┐
+ * │ ⚠️  SIMULATED EXPIRY — READ THIS                                            │
+ * │                                                                            │
+ * │ The merge below is a REAL GitHub API call. But the stale-token failure on  │
+ * │ the naive path is **SIMULATED**, not a real GitHub rejection.              │
+ * │                                                                            │
+ * │ Why: a real GitHub token lives ~1 hour. We can't make a demo wait an hour  │
+ * │ for it to actually expire, so we COMPRESS TIME: when the naive path passes │
+ * │ `capturedAtMs`, we pretend the token's lifetime is DEMO_TTL_MS (a few      │
+ * │ seconds) and throw the 401 OURSELVES — GitHub is never even called on that │
+ * │ path. The real token is still valid; we are faking the expiry to show, in  │
+ * │ seconds, the failure that would really happen an hour into a paused agent  │
+ * │ session.                                                                   │
+ * │                                                                            │
+ * │ The nominee path never passes `capturedAtMs`, so it skips this fake check  │
+ * │ and performs the REAL merge.                                               │
+ * └───────────────────────────────────────────────────────────────────────────┘
  */
 export async function mergePR({
   owner,
@@ -71,9 +81,12 @@ export async function mergePR({
   token,
   capturedAtMs,
 }: PrRef & { token: string; capturedAtMs?: number }): Promise<MergeResult> {
+  // SIMULATED FAILURE (not a real GitHub 401): see the box above. We throw this
+  // ourselves to stand in for a token that expired during a long, time-compressed
+  // approval pause. No GitHub call happens here.
   if (capturedAtMs !== undefined && Date.now() - capturedAtMs > DEMO_TTL_MS) {
     throw new Error(
-      'GitHub 401: Bad credentials — the token grabbed before the (time-compressed) approval pause has expired.',
+      'GitHub 401: Bad credentials — (SIMULATED) the token grabbed before the time-compressed approval pause has "expired".',
     )
   }
   const res = await fetch(`${GH}/repos/${owner}/${repo}/pulls/${number}/merge`, {

@@ -5,10 +5,17 @@ An [Eve](https://eve.dev) agent that reviews a real pull request and merges it
 during the wait for approval — but nominee re-resolves a **fresh token at merge
 time**, so the merge just works no matter how long the pause was.
 
-Everything here is **real** — real GitHub API, real merge of a real PR. The
-*only* thing simulated is **time**: the approval pause is compressed from the
-minutes/hours a real agent waits down to a few seconds, so you can watch a
-captured token go stale in one sitting.
+Everything here is **real** — real GitHub API, real merge of a real PR — with
+**one deliberate simulation**, called out below.
+
+> ### ⚠️ We simulate the token expiry
+> A real GitHub token lives ~1 hour. We can't make a demo wait an hour for it to
+> actually expire, so on the plain **"merge pr"** path we **compress time**: the
+> approval pause is a few seconds and the captured token is *treated* as expired
+> after `DEMO_TTL_MS`. The resulting `401` is **thrown by our own code**
+> (`lib/github.ts`), **not** returned by GitHub — the real token is still valid.
+> It stands in for the failure that would genuinely happen an hour into a paused
+> agent session. The **merge with nominee** path performs a real GitHub merge.
 
 ## Three levels
 
