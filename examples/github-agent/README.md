@@ -70,16 +70,57 @@ pnpm dev           # terminal 2 — the agent (interactive chat)
 > `pnpm broker`.
 
 `pnpm seed` creates `‹your-username›/nominee-agent-testbed` (public) the first
-time and opens a fresh PR, printing the exact line to paste. Then in the chat:
+time and opens a fresh PR, printing the exact `review PR #N on …` line to paste.
+
+### Walk the demo (Levels 1 & 2)
+
+Paste these into the agent chat one at a time. Use the PR number `pnpm seed`
+printed (shown as `#1` below):
 
 ```
 › review PR #1 on ‹your-username›/nominee-agent-testbed
-› merge pr                     ← fails: access expired during the wait (real 403)
-› merge with nominee           ← approve in chat → real merge
+    → reads the PR: title, diff size, merge state
+
+› merge pr
+    → ✗ fails: the access it grabbed expired during the wait (a real 403 from
+      the broker). The PR stays open. This is the problem.
+
+› merge with nominee
+    → pauses for your approval in the chat — approve it
+    → ✓ real merge: nominee fetched fresh access at merge time. PR is now merged.
 ```
 
-Merging closes the PR, so run `pnpm seed` again for another round. To use a repo
-you already own instead, set `TESTBED_REPO=owner/repo` before `pnpm seed`.
+Watch the **broker** terminal as you go — you'll see it `→ issue` a token, then
+`✗ 403 reject` the stale one (Level 1), then `✓ merge` with a fresh one (Level 2).
+
+Merging closes the PR, so **seed another one for the next round**:
+
+```
+pnpm seed                      # opens a fresh PR; note the new number
+```
+
+Then try the same arc again, or jump to Level 3 below. To act on a repo you
+already own instead of the testbed, set `TESTBED_REPO=owner/repo` before
+`pnpm seed`.
+
+### Walk Level 3 (Auth0 Token Vault + CIBA)
+
+Once you've run `pnpm setup:auth0` (see below), seed a fresh PR and try:
+
+```
+pnpm seed
+```
+```
+› review PR #2 on ‹your-username›/nominee-agent-testbed
+› merge with nominee and auth0
+    → nominee pulls a fresh GitHub token from Auth0 Token Vault and sends a CIBA
+      push to your phone
+    → approve on your phone (Auth0 Guardian)
+    → ✓ real merge — same agent, same code shape, now with a vaulted token + a
+      phone approval instead of an in-chat one
+```
+
+If Auth0 isn't set up yet, the tool replies telling you to run `pnpm setup:auth0`.
 
 ### Level 3 — Auth0 Token Vault + CIBA
 
