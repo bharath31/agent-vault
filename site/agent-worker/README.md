@@ -30,7 +30,6 @@ A real agent session doesn't finish in one request — it waits for a human. The
 DO holds the session state (and the user's refresh token) durably across the
 pause. The one rule: the strategy reads the refresh token from durable storage
 at call time, so `nominee.token()` works whether the wake is 30s or 3h later.
-See `examples/cloudflare-durable-agent` for the minimal version of this pattern.
 
 ## Setup (one-time)
 

@@ -1,5 +1,0 @@
-packages:
-  - "packages/*"
-  - "examples/*"
-  # The deployed nominee.dev/agent worker lives here so it ships with the site.
-  - "site/agent-worker"

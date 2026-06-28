@@ -1,7 +1,0 @@
-{
-  "appRoot": "/Users/bharath/dev/nominee/examples/eve-agent",
-  "kind": "eve-dev-runtime-artifacts-pointer",
-  "runtimeAppRoot": "/Users/bharath/dev/nominee/examples/eve-agent/.eve/dev-runtime/snapshots/mqxpby5t-2e5f1774-9e2e-4b6d-afd7-38a59ead0446/source/examples/eve-agent",
-  "snapshotRoot": "/Users/bharath/dev/nominee/examples/eve-agent/.eve/dev-runtime/snapshots/mqxpby5t-2e5f1774-9e2e-4b6d-afd7-38a59ead0446",
-  "version": 2
-}

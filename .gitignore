@@ -20,6 +20,10 @@ launch/
 
 .wrangler/
 
+# Eve dev/build artifacts
+.eve/
+.workflow-data/
+
 # transient secret-staging files
 *.rk.tmp
 .rk.tmp
