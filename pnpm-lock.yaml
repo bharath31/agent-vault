@@ -27,78 +27,6 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@26.0.0)
 
-  examples/cloudflare-agent:
-    dependencies:
-      ai:
-        specifier: ^6.0.208
-        version: 6.0.208(zod@4.4.3)
-      nominee:
-        specifier: workspace:*
-        version: link:../../packages/core
-      nominee-ai:
-        specifier: workspace:*
-        version: link:../../packages/ai
-      workers-ai-provider:
-        specifier: ^3.2.0
-        version: 3.2.0(@ai-sdk/openai@3.0.73(zod@4.4.3))(@ai-sdk/provider@4.0.0-beta.19)(ai@6.0.208(zod@4.4.3))
-      zod:
-        specifier: ^4.4.3
-        version: 4.4.3
-    devDependencies:
-      '@cloudflare/workers-types':
-        specifier: ^4
-        version: 4.20260620.1
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-      wrangler:
-        specifier: ^4.51.0
-        version: 4.103.0(@cloudflare/workers-types@4.20260620.1)
-
-  examples/cloudflare-durable-agent:
-    dependencies:
-      nominee:
-        specifier: workspace:*
-        version: link:../../packages/core
-    devDependencies:
-      '@cloudflare/workers-types':
-        specifier: ^4
-        version: 4.20260620.1
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-      wrangler:
-        specifier: ^4.51.0
-        version: 4.103.0(@cloudflare/workers-types@4.20260620.1)
-
-  examples/eve-agent:
-    dependencies:
-      ai:
-        specifier: 7.0.0-beta.178
-        version: 7.0.0-beta.178(zod@4.4.3)
-      eve:
-        specifier: ^0.11.7
-        version: 0.11.7(@opentelemetry/api@1.9.1)(ai@7.0.0-beta.178(zod@4.4.3))(chokidar@4.0.3)(dotenv@17.4.2)(miniflare@4.20260617.1)(rollup@4.62.2)(vite@5.4.21(@types/node@26.0.0))(wrangler@4.103.0(@cloudflare/workers-types@4.20260620.1))
-      nominee:
-        specifier: workspace:*
-        version: link:../../packages/core
-      nominee-eve:
-        specifier: workspace:*
-        version: link:../../packages/eve
-      zod:
-        specifier: ^4.4.3
-        version: 4.4.3
-    devDependencies:
-      '@types/node':
-        specifier: ^22.19.21
-        version: 22.19.21
-      tsx:
-        specifier: ^4.22.4
-        version: 4.22.4
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
   examples/github-agent:
     dependencies:
       ai:
@@ -106,7 +34,7 @@ importers:
         version: 7.0.0-beta.178(zod@4.4.3)
       eve:
         specifier: ^0.11.7
-        version: 0.11.7(@opentelemetry/api@1.9.1)(ai@7.0.0-beta.178(zod@4.4.3))(chokidar@4.0.3)(dotenv@17.4.2)(miniflare@4.20260617.1)(rollup@4.62.2)(vite@5.4.21(@types/node@26.0.0))(wrangler@4.103.0(@cloudflare/workers-types@4.20260620.1))
+        version: 0.11.7(@opentelemetry/api@1.9.1)(ai@7.0.0-beta.178(zod@4.4.3))(chokidar@4.0.3)(dotenv@17.4.2)(miniflare@4.20260617.1)(rollup@4.62.2)(wrangler@4.103.0(@cloudflare/workers-types@4.20260620.1))
       nominee:
         specifier: workspace:*
         version: link:../../packages/core
@@ -116,53 +44,6 @@ importers:
       nominee-eve:
         specifier: workspace:*
         version: link:../../packages/eve
-      zod:
-        specifier: ^4.4.3
-        version: 4.4.3
-    devDependencies:
-      '@types/node':
-        specifier: ^22.19.21
-        version: 22.19.21
-      tsx:
-        specifier: ^4.22.4
-        version: 4.22.4
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  examples/standalone-node:
-    dependencies:
-      nominee:
-        specifier: workspace:*
-        version: link:../../packages/core
-    devDependencies:
-      '@types/node':
-        specifier: ^22.19.21
-        version: 22.19.21
-      tsx:
-        specifier: ^4.22.4
-        version: 4.22.4
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  examples/vercel-ai-github:
-    dependencies:
-      '@ai-sdk/openai':
-        specifier: ^3.0.73
-        version: 3.0.73(zod@4.4.3)
-      ai:
-        specifier: ^6.0.208
-        version: 6.0.208(zod@4.4.3)
-      dotenv:
-        specifier: ^17.4.2
-        version: 17.4.2
-      nominee:
-        specifier: workspace:*
-        version: link:../../packages/core
-      nominee-ai:
-        specifier: workspace:*
-        version: link:../../packages/ai
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -306,12 +187,6 @@ packages:
   '@ai-sdk/gateway@4.0.0-beta.109':
     resolution: {integrity: sha512-W/1kLlPb6Bgbhwep3CA3R6do0HD7SXV5gyuz2XBLY1YABqgxYkw+IhEcjOYlmn9v+Tifjqy5yJqmWdSHMJhyPQ==}
     engines: {node: '>=22'}
-    peerDependencies:
-      zod: ^3.25.76 || ^4.1.8
-
-  '@ai-sdk/openai@3.0.73':
-    resolution: {integrity: sha512-+3x9oxHv9Xp33Iv2L8D+e5hqmZi64jofBKig/9611JKyfV59NdkaDDajtwc0CxOEfARgCVq1BW7dP+526gKOKw==}
-    engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
@@ -2381,22 +2256,6 @@ packages:
     engines: {node: '>=16'}
     hasBin: true
 
-  workers-ai-provider@3.2.0:
-    resolution: {integrity: sha512-zw74Z5gfmF2i8wR+ORzGrTwY/6Ui24T6FpiNbzjqQJMMmUSIzZhCDyDIiRYIIxsFwvATITrsQLCWHZnxPNpQ4Q==}
-    peerDependencies:
-      '@ai-sdk/anthropic': ^3.0.0
-      '@ai-sdk/google': ^3.0.0
-      '@ai-sdk/openai': ^3.0.0
-      '@ai-sdk/provider': ^3.0.0
-      ai: ^6.0.0
-    peerDependenciesMeta:
-      '@ai-sdk/anthropic':
-        optional: true
-      '@ai-sdk/google':
-        optional: true
-      '@ai-sdk/openai':
-        optional: true
-
   wrangler@4.103.0:
     resolution: {integrity: sha512-3Lv1P5t2xcSEkSTKtG+Lz+3JFryuU7YPLkaCUj7gNe+CJsjZJLtUwqsh1x595QBxkIbCE0GAvDx2DCJUU4+oqw==}
     engines: {node: '>=22.0.0'}
@@ -2442,12 +2301,6 @@ snapshots:
       '@ai-sdk/provider': 4.0.0-beta.19
       '@ai-sdk/provider-utils': 5.0.0-beta.49(zod@4.4.3)
       '@vercel/oidc': 3.2.0
-      zod: 4.4.3
-
-  '@ai-sdk/openai@3.0.73(zod@4.4.3)':
-    dependencies:
-      '@ai-sdk/provider': 3.0.10
-      '@ai-sdk/provider-utils': 4.0.30(zod@4.4.3)
       zod: 4.4.3
 
   '@ai-sdk/provider-utils@4.0.30(zod@4.4.3)':
@@ -3390,7 +3243,8 @@ snapshots:
     dependencies:
       path-type: 4.0.0
 
-  dotenv@17.4.2: {}
+  dotenv@17.4.2:
+    optional: true
 
   enquirer@2.4.1:
     dependencies:
@@ -3508,6 +3362,51 @@ snapshots:
     optionalDependencies:
       '@opentelemetry/api': 1.9.1
       vite: 5.4.21(@types/node@26.0.0)
+    transitivePeerDependencies:
+      - '@azure/app-configuration'
+      - '@azure/cosmos'
+      - '@azure/data-tables'
+      - '@azure/identity'
+      - '@azure/keyvault-secrets'
+      - '@azure/storage-blob'
+      - '@capacitor/preferences'
+      - '@deno/kv'
+      - '@electric-sql/pglite'
+      - '@libsql/client'
+      - '@netlify/blobs'
+      - '@netlify/runtime'
+      - '@planetscale/database'
+      - '@upstash/redis'
+      - '@vercel/blob'
+      - '@vercel/functions'
+      - '@vercel/kv'
+      - '@vercel/queue'
+      - aws4fetch
+      - better-sqlite3
+      - chokidar
+      - dotenv
+      - drizzle-orm
+      - giget
+      - idb-keyval
+      - ioredis
+      - jiti
+      - lru-cache
+      - miniflare
+      - mongodb
+      - mysql2
+      - rollup
+      - sqlite3
+      - uploadthing
+      - wrangler
+      - xml2js
+      - zephyr-agent
+
+  eve@0.11.7(@opentelemetry/api@1.9.1)(ai@7.0.0-beta.178(zod@4.4.3))(chokidar@4.0.3)(dotenv@17.4.2)(miniflare@4.20260617.1)(rollup@4.62.2)(wrangler@4.103.0(@cloudflare/workers-types@4.20260620.1)):
+    dependencies:
+      ai: 7.0.0-beta.178(zod@4.4.3)
+      nitro: 3.0.260610-beta(chokidar@4.0.3)(dotenv@17.4.2)(miniflare@4.20260617.1)(rollup@4.62.2)(wrangler@4.103.0(@cloudflare/workers-types@4.20260620.1))
+    optionalDependencies:
+      '@opentelemetry/api': 1.9.1
     transitivePeerDependencies:
       - '@azure/app-configuration'
       - '@azure/cosmos'
@@ -3748,6 +3647,57 @@ snapshots:
       dotenv: 17.4.2
       rollup: 4.62.2
       vite: 5.4.21(@types/node@26.0.0)
+    transitivePeerDependencies:
+      - '@azure/app-configuration'
+      - '@azure/cosmos'
+      - '@azure/data-tables'
+      - '@azure/identity'
+      - '@azure/keyvault-secrets'
+      - '@azure/storage-blob'
+      - '@capacitor/preferences'
+      - '@deno/kv'
+      - '@electric-sql/pglite'
+      - '@libsql/client'
+      - '@netlify/blobs'
+      - '@netlify/runtime'
+      - '@planetscale/database'
+      - '@upstash/redis'
+      - '@vercel/blob'
+      - '@vercel/functions'
+      - '@vercel/kv'
+      - aws4fetch
+      - better-sqlite3
+      - chokidar
+      - drizzle-orm
+      - idb-keyval
+      - ioredis
+      - lru-cache
+      - miniflare
+      - mongodb
+      - mysql2
+      - sqlite3
+      - uploadthing
+      - wrangler
+
+  nitro@3.0.260610-beta(chokidar@4.0.3)(dotenv@17.4.2)(miniflare@4.20260617.1)(rollup@4.62.2)(wrangler@4.103.0(@cloudflare/workers-types@4.20260620.1)):
+    dependencies:
+      consola: 3.4.2
+      crossws: 0.4.6(srvx@0.11.17)
+      db0: 0.3.4
+      env-runner: 0.1.14(miniflare@4.20260617.1)(wrangler@4.103.0(@cloudflare/workers-types@4.20260620.1))
+      h3: 2.0.1-rc.22(crossws@0.4.6(srvx@0.11.17))
+      hookable: 6.1.1
+      nf3: 0.3.17
+      ocache: 0.1.5
+      ofetch: 2.0.0-alpha.3
+      ohash: 2.0.11
+      rolldown: 1.1.2
+      srvx: 0.11.17
+      unenv: 2.0.0-rc.24
+      unstorage: 2.0.0-alpha.7(chokidar@4.0.3)(db0@0.3.4)(ofetch@2.0.0-alpha.3)
+    optionalDependencies:
+      dotenv: 17.4.2
+      rollup: 4.62.2
     transitivePeerDependencies:
       - '@azure/app-configuration'
       - '@azure/cosmos'
@@ -4247,13 +4197,6 @@ snapshots:
       '@cloudflare/workerd-linux-64': 1.20260617.1
       '@cloudflare/workerd-linux-arm64': 1.20260617.1
       '@cloudflare/workerd-windows-64': 1.20260617.1
-
-  workers-ai-provider@3.2.0(@ai-sdk/openai@3.0.73(zod@4.4.3))(@ai-sdk/provider@4.0.0-beta.19)(ai@6.0.208(zod@4.4.3)):
-    dependencies:
-      '@ai-sdk/provider': 4.0.0-beta.19
-      ai: 6.0.208(zod@4.4.3)
-    optionalDependencies:
-      '@ai-sdk/openai': 3.0.73(zod@4.4.3)
 
   wrangler@4.103.0(@cloudflare/workers-types@4.20260620.1):
     dependencies:

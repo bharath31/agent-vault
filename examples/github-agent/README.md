@@ -6,15 +6,7 @@ happens during the wait: a long-running agent's captured token goes stale, but
 nominee re-resolves a **fresh token at merge time**, so the merge just works no
 matter how long you took to approve.
 
-## Run it (mock mode — zero setup)
-
-```bash
-nvm use            # Node 24 (Eve requires it)
-pnpm install       # from the repo root
-pnpm dev           # opens the Eve chat in your terminal
-```
-
-In the chat, try the two paths:
+Once it's running, try both paths in the chat:
 
 ```
 › review PR #5 on octocat/hello-world
@@ -22,28 +14,56 @@ In the chat, try the two paths:
 › merge it with nominee        ← fresh token at merge time, succeeds
 ```
 
-In mock mode the GitHub calls are **simulated** (no real token, no real merge) so
-you can feel the contrast instantly. The stale-token failure is a *real* expiry —
-the token genuinely passes its `expiresAt` during the pause; we just shrink the
-TTL to a few seconds so it's visible in a demo.
+## Prerequisites
 
-## Make it real (one command)
+You need accounts on **Vercel** (Eve's model gateway), **Auth0** (Token Vault +
+CIBA), and **GitHub**. The setup script installs and logs you into the CLIs it
+needs — you just approve in the browser when prompted.
+
+- [Node 24](https://nodejs.org) (`.nvmrc` pins it — run `nvm use`)
+- The setup auto-installs the **Vercel**, **Auth0**, and **GitHub** CLIs if missing.
+
+## Setup (one command)
 
 ```bash
-pnpm setup         # provisions Auth0 + AI Gateway, one consent click, writes .env
-pnpm dev
+nvm use            # Node 24 — Eve requires it
+pnpm install       # from the repo root
+pnpm setup         # installs CLIs, logs you in, provisions Auth0, writes .env.local
+pnpm dev           # start the agent
 ```
 
-Now the approval is a real **CIBA push to your phone**, the token comes from real
-**Auth0 Token Vault**, and the merge **actually closes a PR**. Point it at a repo
-you own with an open PR. `setup` needs the [Auth0 CLI](https://auth0.github.io/auth0-cli/)
-and [`gh`](https://cli.github.com/); it creates a one-time GitHub OAuth App
-(prompted) and, for the model, an `AI_GATEWAY_API_KEY` (or run `eve link`).
+`pnpm setup` walks through everything, pausing only where a human must approve:
+
+1. **CLIs** — installs `vercel`, `auth0`, `gh` if missing, and runs their login
+   flows if you're not already authenticated.
+2. **Model credential** — runs `eve link` to connect a Vercel project and pull
+   **AI Gateway** access (opens a browser to log into Vercel). The agent uses a
+   cheap model (`anthropic/claude-haiku-4.5`).
+3. **GitHub OAuth App** — prompts you to create one once (it prints the exact
+   URL and callback) and paste the client id/secret.
+4. **Auth0** — creates the app, the GitHub social connection with **Token
+   Vault**, and enables **CIBA**.
+5. **Consent** — one browser click to mint your refresh token.
+6. Writes everything to **`.env.local`** (which Eve reads and hot-reloads).
+
+Point the agent at a repo you own with an open PR. Everything lands in
+`.env.local` (gitignored) — nothing is committed.
+
+### If a step fails
+
+- **`MODEL_CALL_FAILED: AI Gateway received no credentials`** — the model
+  credential isn't set. Re-run `eve link` in this folder, or put an
+  `AI_GATEWAY_API_KEY` (from <https://vercel.com/dashboard/ai/api-keys>) in
+  `.env.local`. Eve only reads `.env.local`, not `.env`.
+- **Auth0 connection step warns** — Token Vault is tenant-dependent; the script
+  prints the dashboard path to enable it manually, then re-run `pnpm setup`.
+- **Auth0 / Vercel / GitHub not logged in** — `pnpm setup` launches each login;
+  just complete it in the browser and it continues.
 
 ## What nominee removes
 
-Here is the merge **without** nominee — what you write by hand, and it still
-breaks under a pause (`agent/tools/merge_pr_naive.ts`):
+The merge **without** nominee — what you write by hand, and it still breaks under
+a pause (`agent/tools/merge_pr_naive.ts`):
 
 ```ts
 const token = await getGitHubToken(user)      // grab once, up front
@@ -52,7 +72,7 @@ const res = await fetch(mergeUrl, { headers: { Authorization: `Bearer ${token}` 
 if (res.status === 401) { /* token went stale — now what? refresh? re-auth? */ }
 ```
 
-And **with** nominee (`agent/tools/merge_pr.ts`) — the bookkeeping is gone:
+The merge **with** nominee (`agent/tools/merge_pr.ts`) — the bookkeeping is gone:
 
 ```ts
 connection: 'github',   // nominee fetches a fresh token at call time
@@ -70,7 +90,7 @@ and approval.
   ```
 - **2 keys** per sensitive tool — `connection` and `approval` — and you never
   write token-refresh or approval code again.
-- Configuration is real, but it's **one command, once** (`pnpm setup`). Not zero
+- Configuration is real, but it's **one command** (`pnpm setup`). Not zero
   config — just zero config *code*.
 
 Swap `auth0()` for any other nominee strategy and the agent code doesn't change.

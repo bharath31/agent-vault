@@ -1,18 +1,18 @@
 #!/usr/bin/env node
 // One-command setup for the github-agent example.
 //
-//   node setup.mjs            provision Auth0 + AI Gateway, write .env
+//   node setup.mjs            install CLIs, provision Auth0 + AI Gateway, write .env.local
 //   node setup.mjs --dry-run  print the plan; run nothing, write nothing
 //
 // What it does (each external step is guarded and clearly announced):
-//   1. preflight  — auth0 + gh CLIs installed & logged in
-//   2. AI Gateway — capture an AI_GATEWAY_API_KEY (or use `eve link`)
+//   1. preflight  — install vercel/auth0/gh CLIs if missing, log you in
+//   2. AI Gateway — `eve link` for the model credential (or an AI_GATEWAY_API_KEY)
 //   3. GitHub App — OAuth App client id/secret for the Auth0 connection
 //   4. Auth0 app  — a Regular Web App (Authorization Code + Refresh Token)
 //   5. connection — GitHub social connection with Token Vault enabled
 //   6. CIBA       — enable the CIBA grant on the app
 //   7. consent    — one browser pop to mint the user's refresh token + sub
-//   8. write .env — AI_GATEWAY_API_KEY + all AUTH0_* values
+//   8. write .env.local — merges AUTH0_* (+ key) into the file Eve reads
 //
 // The Token Vault connection step is finicky and tenant-dependent; if the API
 // call fails the script prints the exact manual fallback instead of dying.
@@ -85,51 +85,83 @@ function openBrowser(url) {
   }
 }
 
+/** Ensure a CLI exists, installing it if missing. `npm` installs cross-platform;
+ *  otherwise we use Homebrew on macOS. Exits with a clear message if it can't. */
+function ensureCli(name, { npm, brew, manual }) {
+  if (has(name)) {
+    ok(`${name} present`)
+    return
+  }
+  console.log(c.dim(`    ${name} not found — installing…`))
+  try {
+    if (npm) execFileSync('npm', ['install', '-g', npm], { stdio: 'inherit' })
+    else if (platform === 'darwin' && has('brew'))
+      execFileSync('brew', ['install', brew], { stdio: 'inherit' })
+    else throw new Error('no installer')
+  } catch {
+    // fall through to the check below
+  }
+  if (!has(name)) {
+    warn(`Could not install ${name} automatically. Install it and re-run:\n      ${manual}`)
+    process.exit(1)
+  }
+  ok(`${name} installed`)
+}
+
+function ensureLogin(name, checkArgs, loginArgs, label) {
+  try {
+    execFileSync(name, checkArgs, { stdio: 'ignore' })
+    ok(`${label} logged in`)
+  } catch {
+    warn(`${label} not logged in — launching \`${name} ${loginArgs.join(' ')}\``)
+    sh(name, loginArgs, { capture: false })
+  }
+}
+
 // ── 1. preflight ────────────────────────────────────────────────────────────
 async function preflight() {
-  step('Preflight — check CLIs')
-  if (!DRY_RUN) {
-    if (!has('auth0')) {
-      warn('Auth0 CLI not found. Install: brew install auth0/auth0-cli/auth0')
-      process.exit(1)
-    }
-    if (!has('gh')) {
-      warn('GitHub CLI not found. Install: brew install gh')
-      process.exit(1)
-    }
-    try {
-      execFileSync('auth0', ['apps', 'list', '--json-compact'], { stdio: 'ignore' })
-      ok('Auth0 CLI is logged in')
-    } catch {
-      warn('Auth0 CLI not logged in — launching `auth0 login`')
-      sh('auth0', ['login'], { capture: false })
-    }
-  } else {
-    plan('auth0 --version  &&  gh --version')
-    plan('auth0 apps list --json-compact   # or: auth0 login')
+  step('Preflight — install & check CLIs')
+  if (DRY_RUN) {
+    plan('ensure vercel CLI (npm i -g vercel)')
+    plan('ensure auth0 CLI (brew install auth0/auth0-cli/auth0)')
+    plan('ensure gh CLI (brew install gh)')
+    plan('auth0 login / gh auth login if needed')
+    return
   }
+  ensureCli('vercel', { npm: 'vercel', manual: 'npm i -g vercel' })
+  ensureCli('auth0', {
+    brew: 'auth0/auth0-cli/auth0',
+    manual: 'brew install auth0/auth0-cli/auth0',
+  })
+  ensureCli('gh', { brew: 'gh', manual: 'brew install gh (or see https://cli.github.com)' })
+  ensureLogin('auth0', ['apps', 'list', '--json-compact'], ['login'], 'Auth0 CLI')
+  ensureLogin('gh', ['auth', 'status'], ['auth', 'login'], 'GitHub CLI')
 }
 
 // ── 2. AI Gateway ───────────────────────────────────────────────────────────
 async function aiGatewayKey(existing) {
   step('Vercel AI Gateway — model credential')
-  if (existing.AI_GATEWAY_API_KEY) {
-    ok('AI_GATEWAY_API_KEY already present')
-    return existing.AI_GATEWAY_API_KEY
+  if (existing.AI_GATEWAY_API_KEY || existing.VERCEL_OIDC_TOKEN) {
+    ok('Gateway credential already present')
+    return existing.AI_GATEWAY_API_KEY ?? ''
   }
   if (DRY_RUN) {
-    plan('prompt for AI_GATEWAY_API_KEY (https://vercel.com/dashboard/ai/api-keys)')
-    plan('alternative: eve link')
+    plan('eve link  (Vercel login → AI Gateway access)')
+    plan('fallback: prompt for AI_GATEWAY_API_KEY (https://vercel.com/dashboard/ai/api-keys)')
     return ''
   }
-  console.log(
-    c.dim('    Create a key at https://vercel.com/dashboard/ai/api-keys (or run `eve link`).'),
-  )
-  const key = (
-    await ask('Paste your AI_GATEWAY_API_KEY (or leave blank to use `eve link`):')
-  ).trim()
-  if (!key) warn('No key set — make sure `eve link` is active before `pnpm dev`.')
-  return key
+  console.log(c.dim('    Linking to Vercel for AI Gateway access (opens a browser to log in)…'))
+  try {
+    execFileSync('pnpm', ['exec', 'eve', 'link'], { stdio: 'inherit', cwd: HERE })
+    ok('Linked to Vercel — AI Gateway ready')
+    return '' // `eve link` manages the credential itself
+  } catch {
+    warn(
+      '`eve link` did not complete. Paste a key instead (https://vercel.com/dashboard/ai/api-keys).',
+    )
+    const key = (await ask('AI_GATEWAY_API_KEY:')).trim()
+    return key
+  }
 }
 
 // ── 3. GitHub OAuth App ─────────────────────────────────────────────────────
@@ -288,24 +320,30 @@ function decodeJwtSub(idToken) {
   }
 }
 
-// ── 8. write .env ───────────────────────────────────────────────────────────
+const ENV_PATH = join(HERE, '.env.local')
+
+// ── 8. write .env.local ─────────────────────────────────────────────────────
+// Eve reads `.env.local` (its candidates are ['.env.local', '.env']) and
+// hot-reloads it. We MERGE so we never clobber what `eve link` wrote there.
 function writeEnv(values) {
-  step('Write .env')
-  const lines = Object.entries(values).map(([k, v]) => `${k}=${v ?? ''}`)
-  const body = `${lines.join('\n')}\n`
+  step('Write .env.local')
+  const provided = Object.fromEntries(Object.entries(values).filter(([, v]) => v))
   if (DRY_RUN) {
-    plan(`write .env with keys: ${Object.keys(values).join(', ')}`)
+    plan(`merge into .env.local: ${Object.keys(provided).join(', ')}`)
     return
   }
-  writeFileSync(join(HERE, '.env'), body)
-  ok('.env written')
+  const merged = { ...readExistingEnv(), ...provided }
+  const body = `${Object.entries(merged)
+    .map(([k, v]) => `${k}=${v}`)
+    .join('\n')}\n`
+  writeFileSync(ENV_PATH, body)
+  ok('.env.local written')
 }
 
 function readExistingEnv() {
-  const path = join(HERE, '.env')
-  if (!existsSync(path)) return {}
+  if (!existsSync(ENV_PATH)) return {}
   const env = {}
-  for (const line of readFileSync(path, 'utf8').split('\n')) {
+  for (const line of readFileSync(ENV_PATH, 'utf8').split('\n')) {
     const m = line.match(/^([A-Z0-9_]+)=(.*)$/)
     if (m?.[2]) env[m[1]] = m[2]
   }

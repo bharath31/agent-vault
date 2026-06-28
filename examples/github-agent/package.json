@@ -9,11 +9,11 @@
     "setup": "node setup.mjs"
   },
   "dependencies": {
-    "nominee": "workspace:*",
-    "nominee-eve": "workspace:*",
-    "nominee-auth0": "workspace:*",
-    "eve": "^0.11.7",
     "ai": "7.0.0-beta.178",
+    "eve": "^0.11.7",
+    "nominee": "workspace:*",
+    "nominee-auth0": "workspace:*",
+    "nominee-eve": "workspace:*",
     "zod": "^4.4.3"
   },
   "devDependencies": {
