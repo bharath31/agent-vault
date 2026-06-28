@@ -1,5 +1,11 @@
 # nominee-eve
 
+## 2.0.0
+
+### Patch Changes
+
+- nominee@2.0.0
+
 ## 1.1.0
 
 ### Patch Changes
