@@ -672,4 +672,9 @@ main()
     console.error(c.red(`\nSetup failed: ${err.message}\n`))
     process.exitCode = 1
   })
-  .finally(() => rl.close())
+  .finally(() => {
+    rl.close()
+    // The consent step's localhost callback server can keep a browser keep-alive
+    // socket open, holding the event loop. Exit explicitly so setup returns.
+    process.exit(process.exitCode ?? 0)
+  })
