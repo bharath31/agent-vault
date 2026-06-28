@@ -348,12 +348,15 @@ function authorizeMyAccount(appClientId, domain) {
     'delete:me:connected_accounts',
   ]
   try {
+    // subject_type MUST be 'user' — the refresh token is minted in the user
+    // authorize flow, not a machine (client_credentials) flow. A 'client' grant
+    // leaves the authorize unauthorized for the /me/ audience.
     sh('auth0', [
       'api',
       'post',
       'client-grants',
       '--data',
-      JSON.stringify({ client_id: appClientId, audience, scope }),
+      JSON.stringify({ client_id: appClientId, audience, scope, subject_type: 'user' }),
     ])
   } catch {
     // Likely already granted on a re-run — fine.
