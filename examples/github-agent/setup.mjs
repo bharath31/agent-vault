@@ -1,18 +1,22 @@
 #!/usr/bin/env node
 // One-command setup for the github-agent example.
 //
-//   node setup.mjs            install CLIs, provision Auth0 + AI Gateway, write .env.local
+//   node setup.mjs            Levels 1 & 2: model credential + a real GitHub token
+//   node setup.mjs --auth0    also Level 3: Auth0 Token Vault + CIBA
 //   node setup.mjs --dry-run  print the plan; run nothing, write nothing
 //
-// What it does (each external step is guarded and clearly announced):
-//   1. preflight  — install vercel/auth0/gh CLIs if missing, log you in
+// Default (works for everybody):
+//   1. preflight  — install vercel/gh CLIs if missing, log you in
 //   2. AI Gateway — `eve link` for the model credential (or an AI_GATEWAY_API_KEY)
-//   3. GitHub App — OAuth App client id/secret for the Auth0 connection
-//   4. Auth0 app  — a Regular Web App (Authorization Code + Refresh Token)
-//   5. connection — GitHub social connection with Token Vault enabled
-//   6. CIBA       — enable the CIBA grant on the app
-//   7. consent    — one browser pop to mint the user's refresh token + sub
-//   8. write .env.local — merges AUTH0_* (+ key) into the file Eve reads
+//   3. GitHub     — capture a real token from `gh auth token` (GITHUB_TOKEN)
+//   -. write .env.local
+//
+// With --auth0 (needs an Auth0 tenant with Token Vault + CIBA):
+//   4. GitHub App — OAuth App client id/secret for the Auth0 connection
+//   5. Auth0 app  — a Regular Web App (Authorization Code + Refresh Token)
+//   6. connection — GitHub social connection with Token Vault enabled
+//   7. CIBA       — enable the CIBA grant on the app
+//   8. consent    — one browser pop to mint the user's refresh token + sub
 //
 // The Token Vault connection step is finicky and tenant-dependent; if the API
 // call fails the script prints the exact manual fallback instead of dying.
@@ -27,6 +31,7 @@ import { fileURLToPath } from 'node:url'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const DRY_RUN = process.argv.includes('--dry-run')
+const WITH_AUTH0 = process.argv.includes('--auth0')
 const APP_NAME = 'nominee-github-agent'
 const CALLBACK_PORT = 4777
 const CALLBACK_URL = `http://localhost:${CALLBACK_PORT}/callback`
@@ -123,19 +128,33 @@ async function preflight() {
   step('Preflight — install & check CLIs')
   if (DRY_RUN) {
     plan('ensure vercel CLI (npm i -g vercel)')
-    plan('ensure auth0 CLI (brew install auth0/auth0-cli/auth0)')
     plan('ensure gh CLI (brew install gh)')
-    plan('auth0 login / gh auth login if needed')
+    if (WITH_AUTH0) plan('ensure auth0 CLI (brew install auth0/auth0-cli/auth0)')
+    plan(`vercel / gh login if needed${WITH_AUTH0 ? ' + auth0 login' : ''}`)
     return
   }
   ensureCli('vercel', { npm: 'vercel', manual: 'npm i -g vercel' })
-  ensureCli('auth0', {
-    brew: 'auth0/auth0-cli/auth0',
-    manual: 'brew install auth0/auth0-cli/auth0',
-  })
   ensureCli('gh', { brew: 'gh', manual: 'brew install gh (or see https://cli.github.com)' })
-  ensureLogin('auth0', ['apps', 'list', '--json-compact'], ['login'], 'Auth0 CLI')
   ensureLogin('gh', ['auth', 'status'], ['auth', 'login'], 'GitHub CLI')
+  if (WITH_AUTH0) {
+    ensureCli('auth0', {
+      brew: 'auth0/auth0-cli/auth0',
+      manual: 'brew install auth0/auth0-cli/auth0',
+    })
+    ensureLogin('auth0', ['apps', 'list', '--json-compact'], ['login'], 'Auth0 CLI')
+  }
+}
+
+// ── GitHub token (Level 2 — works for everybody) ─────────────────────────────
+function githubToken() {
+  step('GitHub token — Level 2 credential')
+  if (DRY_RUN) {
+    plan('GITHUB_TOKEN = $(gh auth token)')
+    return ''
+  }
+  const token = sh('gh', ['auth', 'token'])
+  ok('Captured a GitHub token from the gh CLI')
+  return token
 }
 
 // ── 2. AI Gateway ───────────────────────────────────────────────────────────
@@ -352,29 +371,46 @@ function readExistingEnv() {
 
 // ── main ────────────────────────────────────────────────────────────────────
 async function main() {
-  console.log(c.bold(`\nnominee github-agent setup${DRY_RUN ? c.dim('  (dry run)') : ''}`))
+  console.log(
+    c.bold(
+      `\nnominee github-agent setup${WITH_AUTH0 ? ' + Auth0' : ''}${DRY_RUN ? c.dim('  (dry run)') : ''}`,
+    ),
+  )
 
   await preflight()
   const existing = { ...readExistingEnv(), ...process.env }
+
+  // Model credential (all levels) + GitHub token (Levels 1 & 2 — works for everybody).
   const aiKey = await aiGatewayKey(existing)
+  const ghToken = githubToken()
+  const env = { AI_GATEWAY_API_KEY: aiKey, GITHUB_TOKEN: ghToken }
 
-  const domain = tenantDomain()
-  const gh = await githubOAuthApp(domain)
-  const { clientId, clientSecret } = auth0App()
-  githubConnection(clientId, gh)
-  enableCiba(clientId)
-  const { refreshToken, sub } = await consent(domain, clientId, clientSecret)
+  // Level 3 — Auth0 Token Vault + CIBA. Only with --auth0.
+  if (WITH_AUTH0) {
+    const domain = tenantDomain()
+    const gh = await githubOAuthApp(domain)
+    const { clientId, clientSecret } = auth0App()
+    githubConnection(clientId, gh)
+    enableCiba(clientId)
+    const { refreshToken, sub } = await consent(domain, clientId, clientSecret)
+    Object.assign(env, {
+      AUTH0_DOMAIN: domain,
+      AUTH0_CLIENT_ID: clientId,
+      AUTH0_CLIENT_SECRET: clientSecret,
+      AUTH0_REFRESH_TOKEN: refreshToken,
+      AUTH0_USER_SUB: sub,
+    })
+  }
 
-  writeEnv({
-    AI_GATEWAY_API_KEY: aiKey,
-    AUTH0_DOMAIN: domain,
-    AUTH0_CLIENT_ID: clientId,
-    AUTH0_CLIENT_SECRET: clientSecret,
-    AUTH0_REFRESH_TOKEN: refreshToken,
-    AUTH0_USER_SUB: sub,
-  })
-
-  console.log(c.green(`\n✓ Done. Next: ${c.bold('pnpm dev')}\n`))
+  writeEnv(env)
+  console.log(
+    c.green(
+      `\n✓ Done. Seed a PR with ${c.bold('pnpm seed')}, then start with ${c.bold('pnpm dev')}.\n`,
+    ),
+  )
+  if (!WITH_AUTH0) {
+    console.log(c.dim('  For Level 3 (Auth0 Token Vault + CIBA): pnpm setup --auth0\n'))
+  }
 }
 
 main()

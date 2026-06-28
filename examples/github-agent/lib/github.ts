@@ -14,12 +14,6 @@ export interface PrSummary extends PrRef {
 export interface MergeResult {
   merged: boolean
   url: string
-  simulated: boolean
-}
-
-/** A token minted by the built-in mock strategy never hits real GitHub. */
-export function isMockToken(token: string): boolean {
-  return token.startsWith('mock-')
 }
 
 const GH = 'https://api.github.com'
@@ -27,31 +21,27 @@ const headers = (token: string) => ({
   Authorization: `Bearer ${token}`,
   Accept: 'application/vnd.github+json',
   'User-Agent': 'nominee-github-agent',
+  'X-GitHub-Api-Version': '2022-11-28',
 })
 
-/** Read a PR. Simulated in mock mode (no real token to use). */
+/** Read a real pull request from GitHub. */
 export async function getPR({
   owner,
   repo,
   number,
   token,
 }: PrRef & { token: string }): Promise<PrSummary> {
-  if (isMockToken(token)) {
-    return {
-      owner,
-      repo,
-      number,
-      title: 'Fix flaky test',
-      additions: 12,
-      deletions: 3,
-      checks: 'passing',
-    }
-  }
   const res = await fetch(`${GH}/repos/${owner}/${repo}/pulls/${number}`, {
     headers: headers(token),
   })
   if (!res.ok) throw new Error(`GitHub ${res.status}: ${await res.text()}`)
-  const pr = (await res.json()) as { title: string; additions?: number; deletions?: number }
+  const pr = (await res.json()) as {
+    title: string
+    additions?: number
+    deletions?: number
+    head?: { sha?: string }
+    mergeable_state?: string
+  }
   return {
     owner,
     repo,
@@ -59,15 +49,20 @@ export async function getPR({
     title: pr.title,
     additions: pr.additions ?? 0,
     deletions: pr.deletions ?? 0,
-    checks: 'see GitHub',
+    checks: pr.mergeable_state ?? 'unknown',
   }
 }
 
 /**
- * Merge a PR. `capturedAtMs` is supplied ONLY by the naive path; when present we
- * enforce the compressed demo window and reject a token grabbed before the
- * approval pause — the genuine stale-token failure, on a shrunk clock. The
- * nominee path never passes it (its token is fresh at call time).
+ * Merge a real pull request on GitHub.
+ *
+ * `capturedAtMs` is supplied ONLY by the naive (no-nominee) path. It models a
+ * long-running agent that grabbed a token up front: we COMPRESS TIME — treat the
+ * captured token as past its lifetime after DEMO_TTL_MS — so the stale-token
+ * failure that would really happen ~1h later is visible in seconds. This time
+ * compression is the demo's only simulation; the merge itself is a real GitHub
+ * call. The nominee path never passes `capturedAtMs` (its token is fresh at call
+ * time), so it always performs the real merge.
  */
 export async function mergePR({
   owner,
@@ -78,15 +73,8 @@ export async function mergePR({
 }: PrRef & { token: string; capturedAtMs?: number }): Promise<MergeResult> {
   if (capturedAtMs !== undefined && Date.now() - capturedAtMs > DEMO_TTL_MS) {
     throw new Error(
-      'GitHub 401: Bad credentials — the token was grabbed before the approval pause and has expired.',
+      'GitHub 401: Bad credentials — the token grabbed before the (time-compressed) approval pause has expired.',
     )
-  }
-  if (isMockToken(token)) {
-    return {
-      merged: true,
-      url: `https://github.com/${owner}/${repo}/pull/${number}`,
-      simulated: true,
-    }
   }
   const res = await fetch(`${GH}/repos/${owner}/${repo}/pulls/${number}/merge`, {
     method: 'PUT',
@@ -94,9 +82,5 @@ export async function mergePR({
     body: JSON.stringify({ merge_method: 'merge' }),
   })
   if (!res.ok) throw new Error(`GitHub ${res.status}: ${await res.text()}`)
-  return {
-    merged: true,
-    url: `https://github.com/${owner}/${repo}/pull/${number}`,
-    simulated: false,
-  }
+  return { merged: true, url: `https://github.com/${owner}/${repo}/pull/${number}` }
 }

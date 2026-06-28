@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Golden nominee example — an Eve PR review-and-merge agent on Auth0 Token Vault + CIBA",
+  "description": "Golden nominee example — an Eve PR review-and-merge agent (real GitHub merges; Auth0 Token Vault + CIBA at Level 3)",
   "scripts": {
     "dev": "eve dev",
-    "setup": "node setup.mjs"
+    "setup": "node setup.mjs",
+    "setup:auth0": "node setup.mjs --auth0",
+    "seed": "node seed-pr.mjs"
   },
   "dependencies": {
     "ai": "7.0.0-beta.178",

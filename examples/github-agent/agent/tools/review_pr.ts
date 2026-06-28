@@ -5,17 +5,17 @@ import { nominee } from '../../lib/nominee.js'
 
 export default nomineeTool({
   nominee,
-  user: 'me', // single-user demo; in a multi-user app, resolve from ctx.session
+  user: 'me',
   connection: 'github', // nominee fetches a fresh token at call time
   action: 'github.review_pr',
-  description: 'Read a pull request: title, diff size, and CI status.',
+  description: 'Read a pull request: title, diff size, and merge state.',
   inputSchema: z.object({
-    owner: z.string().describe('Repo owner, e.g. "octocat"'),
-    repo: z.string().describe('Repo name, e.g. "hello-world"'),
+    owner: z.string().describe('Repo owner, e.g. "bharath31"'),
+    repo: z.string().describe('Repo name, e.g. "nominee-agent-testbed"'),
     number: z.number().describe('PR number'),
   }),
   async execute({ owner, repo, number }, { token }) {
     const pr = await getPR({ owner, repo, number, token: token! })
-    return `PR #${pr.number} "${pr.title}" · +${pr.additions} −${pr.deletions} · checks ${pr.checks}`
+    return `PR #${pr.number} "${pr.title}" · +${pr.additions} −${pr.deletions} · ${pr.checks}`
   },
 })

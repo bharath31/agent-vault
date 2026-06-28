@@ -3,11 +3,11 @@ import { z } from 'zod'
 import { APPROVAL_PAUSE_MS } from '../../lib/constants.js'
 import { mergePR } from '../../lib/github.js'
 import { captureToken } from '../../lib/naive-session.js'
-import { nominee } from '../../lib/nominee.js'
 
-// The hand-rolled way, WITHOUT nominee. This is what a careful developer writes:
-// grab a token, wait for approval, then act. It looks fine — and it breaks,
-// because the token grabbed up front goes stale during the pause.
+// LEVEL 1 — WITHOUT nominee. The hand-rolled way: grab a token up front, wait for
+// approval, then act with the token you grabbed. The pause is time-compressed to
+// a few seconds (a real agent waits minutes or hours); by the time we merge, the
+// captured token is stale → GitHub 401. This is the problem nominee removes.
 export default defineTool({
   description: 'Merge a pull request WITHOUT nominee (hand-rolled token handling).',
   inputSchema: z.object({
@@ -16,17 +16,12 @@ export default defineTool({
     number: z.number(),
   }),
   async execute({ owner, repo, number }) {
-    const user = 'me'
+    const raw = process.env.GITHUB_TOKEN
+    if (!raw) return 'GITHUB_TOKEN not set — run `pnpm setup`.'
 
-    // 1. Grab a GitHub token up front, the way a long-running agent would.
-    const raw = await nominee.token({ user, connection: 'github' })
-    const held = captureToken(raw) // token grabbed before the pause — still valid? we assume so…
+    const held = captureToken(raw) // grabbed up front, before the pause
+    await new Promise((r) => setTimeout(r, APPROVAL_PAUSE_MS)) // the long wait (time-compressed)
 
-    // 2. Pause for human approval (the agent's long wait).
-    await new Promise((r) => setTimeout(r, APPROVAL_PAUSE_MS))
-
-    // 3. Act with the token we grabbed earlier. If it expired, now what —
-    //    refresh? re-auth? This is the bookkeeping nominee removes.
     try {
       const r = await mergePR({
         owner,
@@ -38,7 +33,7 @@ export default defineTool({
       return `✓ Merged ${r.url}`
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e)
-      return `✗ ${message}\n(The captured token went stale during the pause. This is the problem nominee solves.)`
+      return `✗ ${message}\n(The token I grabbed went stale during the pause. This is what nominee fixes.)`
     }
   },
 })
