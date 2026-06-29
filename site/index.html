@@ -84,9 +84,9 @@
           <p class="hero-tag">OAuth for agents that act on your users' behalf <span class="ref">· MIT</span></p>
           <h1>Fresh tokens, approval &amp; audit.<br /><span class="ink-soft">For agents that act for your users.</span></h1>
           <p class="lede">
-            Naive OAuth refresh breaks under rotation + concurrency. nominee keeps a
-            third-party token fresh at the moment of each tool call, pauses for human
-            approval, and logs who authorized what — <strong>framework-neutral, no SaaS</strong>.
+            Naive OAuth refresh breaks under rotation and concurrency. nominee keeps
+            your agent's token fresh at every tool call, pauses for human approval, and
+            logs who did what — <strong>framework-neutral, no SaaS</strong>.
           </p>
           <div class="hero-actions">
             <button class="copy" data-copy="npm i nominee" aria-label="Copy install command">
@@ -220,11 +220,11 @@
       <section class="section how" id="how">
         <div class="section-head">
           <p class="eyebrow">How it works</p>
-          <h2>A standing authority — issued fresh, revocable, on the record.</h2>
+          <h2>Fresh at call time. Held for a human. On the record.</h2>
           <p>
-            You are the principal. Your agent is the nominee, authorized to act for
-            you within a scope. nominee fetches a valid token at the moment of each
-            call, holds the risky ones for a person, and keeps the register.
+            You're the principal; your agent is the nominee, acting for you within a
+            scope. nominee fetches a valid token at each call, holds the risky ones
+            for a person, and logs every step — no SaaS in the middle.
           </p>
         </div>
         <div class="how-grid">

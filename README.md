@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bharath31/nominee/main/.github/media/banner.png?v=4" alt="nominee — identity and token delegation for AI agents" width="100%" />
+  <img src="https://raw.githubusercontent.com/bharath31/nominee/main/.github/media/banner.png?v=4" alt="nominee — fresh tokens, human approval, and an audit trail for agents that act on your users' behalf" width="100%" />
 </p>
 
 <p align="center">
@@ -31,8 +31,8 @@
 </p>
 
 <p align="center">
-  <strong>Want to run it yourself?</strong> The <a href="examples/github-agent">github-agent example</a> is a real
-  PR-merge agent where <code>merge pr</code> fails on a stale token and <code>merge with nominee</code> just works.
+  <strong>Want proof?</strong> <a href="examples/token-refresh-correctness">Run the example</a> — naive concurrent
+  refresh fails <strong>7/8</strong>, nominee gets <strong>8/8</strong> with the same agent code. No mocks that cheat.
 </p>
 
 ---
@@ -163,12 +163,25 @@ Nominee plugs directly into your AI framework's tool system.
 
 ---
 
+## Examples
+
+Runnable, in [`examples/`](examples):
+
+| Example | What it shows |
+|---|---|
+| [`token-refresh-correctness`](examples/token-refresh-correctness) | The proof. Naive concurrent + rotating refresh fails 7/8; nominee gets 8/8 — same agent code. `node run.mjs`, no mocks that cheat. |
+| [`ai-sdk-minimal`](examples/ai-sdk-minimal) | Drop nominee into a Vercel AI SDK tool in one `nomineeTool` wrapper — fresh token + approval + audit. |
+| [`ai-sdk-github-agent`](examples/ai-sdk-github-agent) | An AI SDK agent that merges a PR on your behalf: fresh token at merge time, human approval, full audit. |
+| [`github-agent`](examples/github-agent) | The same idea on Eve, with an Auth0 Token Vault + CIBA phone-approval tier. |
+
+---
+
 ## Strategies
 
 | Strategy | Use case |
 |---|---|
 | `tokens(fn)` | Simple function — env vars, your DB, a literal string |
-| `OAuth2({ connections })` | Generic OAuth2 refresh-token flow, zero deps |
+| `OAuth2({ connections })` | Generic refresh-token flow, zero deps. Set `onRefreshToken` for rotating providers (GitHub Apps, Google, Okta, Auth0) |
 | `Memory({ tokens })` | Dev & test in-memory store |
 | [`nominee-supabase`](https://www.npmjs.com/package/nominee-supabase) | Read & refresh provider tokens stored in Supabase *(optional)* |
 | [`nominee-auth0`](https://www.npmjs.com/package/nominee-auth0) | Auth0 Token Vault + CIBA push approvals *(optional)* |
