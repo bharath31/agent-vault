@@ -10,7 +10,10 @@
       "launch",
       ".wrangler",
       ".eve",
-      ".workflow-data"
+      ".workflow-data",
+      "examples/token-refresh-correctness/.b.json",
+      "examples/token-refresh-correctness/.c.json",
+      "examples/token-refresh-correctness/.d.json"
     ]
   },
   "organizeImports": { "enabled": true },

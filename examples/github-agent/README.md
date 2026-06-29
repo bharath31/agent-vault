@@ -19,7 +19,12 @@ Nothing is simulated; we just don't have to wait an hour to see a token expire,
 because it's *our* token with a deliberately short TTL.
 
 That's the whole point made concrete: a long-running agent that grabs access up
-front finds it expired by the time a human approves.
+front finds it expired by the time a human approves. The short-TTL broker isn't a
+strawman — it's the fastest honest way to reproduce, in seconds, the exact
+staleness you hit on any real provider after a long pause. For the underlying
+mechanism in plain code (expiry **+ refresh-token rotation + concurrency**, with
+a runnable `7/8 fail → 8/8` proof), see
+[`examples/token-refresh-correctness`](../token-refresh-correctness).
 
 ## Three levels
 
@@ -170,3 +175,12 @@ needsApproval: always(),  // human-in-the-loop, right in the chat
 And Level 3 is the *same tool shape* — only the nominee instance changes
 (`auth0()` instead of the gh-token strategy), and approval becomes a CIBA phone
 push. You never write token-refresh or approval plumbing at any level.
+
+## When you don't need nominee
+
+nominee isn't the only way to fix the stale-token problem, and it isn't always the
+right one. If your framework already brokers fresh third-party access for you (Eve,
+Vercel Connect) or you're on a managed token layer (Auth0 Token Vault on its own,
+Nango), use that — reach for nominee when you want this behaviour **framework-neutral
+and without a SaaS**: bring your own store, keep the same agent code across Eve, the
+Vercel AI SDK, or standalone, and swap the vault underneath without rewriting tools.

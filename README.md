@@ -11,8 +11,8 @@
 </p>
 
 <p align="center">
-  <strong>Identity and token delegation for AI agents.</strong><br />
-  The provider-neutral auth layer for agents that act on your behalf.
+  <strong>Fresh tokens, human approval, and an audit trail for agents that act on your users' behalf.</strong><br />
+  Framework-neutral, no SaaS — the Passport.js of agent auth, for the multi-framework / no-lock-in / standalone tail.
 </p>
 
 <p align="center">
@@ -47,7 +47,9 @@ You authorized the agent at **9am**. By **3pm**, the GitHub token has expired �
 
 An agent acting on behalf of a user needs a **fresh** third-party token at the exact moment of a tool call. Sometimes that action is sensitive and needs human approval. It always needs an audit trail.
 
-**nominee** is the provider-neutral layer that solves this — the *"Passport.js of agent auth."*
+"Just refresh the token" is a five-line happy path — until you meet **short-lived access tokens** and **rotating refresh tokens** (GitHub Apps, Google one-time-use, Okta, Auth0 rotation). Then grab-up-front breaks across an approval pause, and naive refresh breaks under concurrency: fire 8 tool calls at once and **7/8 fail with `invalid_grant`** as rotation invalidates the tokens the others are still holding. Runnable proof (naive 7/8 fail vs nominee 8/8, no mocks that cheat): [`examples/token-refresh-correctness`](examples/token-refresh-correctness).
+
+**nominee** is the framework-neutral, no-SaaS layer that makes this correct — fresh at call time, single-flight refresh, rotation persisted via `onRefreshToken` — with the same agent code.
 
 ---
 
@@ -233,18 +235,31 @@ const unsub = nominee.on((event) => console.log(event))
 
 ## Why nominee
 
-The hard part of agent auth isn't the OAuth dance — it's keeping a token *fresh across a long run*, gating the risky calls, and proving who authorized what. nominee does all three, in one provider-neutral layer.
+The hard part of agent auth isn't the OAuth dance — it's keeping a token *fresh across a long run*, gating the risky calls, and proving who authorized what. nominee is a thin, neutral **seam** that does all three: your agent asks for a token at call time, nominee keeps it fresh and gated, and your vault stays swappable underneath.
 
-| Capability | nominee | AI SDK / CF Agents / LangChain | Auth0 (alone) |
-| --- | :---: | :---: | :---: |
-| Fresh token at execution time | ✅ | you write it | ✅ (vendor-locked) |
-| Survives durable hibernation | ✅ | you write it | ✅ (vendor-locked) |
-| Provider-neutral (swap vendors) | ✅ | — | — |
-| Zero-signup to start | ✅ | ✅ | — |
-| Human-in-the-loop approval | ✅ | AI SDK ✅, others — | — |
-| Audit log | ✅ | — | partial |
+```
+  your agent / framework        AI SDK · Eve · Cloudflare Agents · standalone
+    asks for a token at call time
+        │
+        ▼   nominee.token({ user, connection })
+  nominee                       single-flight refresh · rotation persistence
+    freshness · approval · audit · delegation        · human-in-the-loop
+        │
+        ▼   strategy.getToken()
+  your vault / store            env · DB · OAuth2 · Auth0 Token Vault · Supabase · Nango
+    where the refresh token actually lives
+```
 
-> **When you don't need nominee:** single-provider, short-lived, non-durable app → your IdP's SDK or ~20 lines is enough. nominee pays off for long-running, durable, multi-provider agents, or when you refuse lock-in.
+Start on your DB → Auth0 → Nango: only the `strategy` line changes, your agent code never does.
+
+### When you *don't* need nominee
+
+- **You're on Eve**, or a framework that already brokers fresh third-party access — use its native auth.
+- **You use the Vercel AI SDK with Vercel Connect** for connectors — Connect already manages the tokens.
+- **One provider, a long-lived non-rotating token, no pause, no concurrency** — a plain refresh is genuinely enough.
+- **You want one fully-managed vendor** — use Auth0 Token Vault or Nango directly.
+
+Reach for nominee when you want freshness + approval + audit that's **framework-neutral, no-SaaS, and bring-your-own-store** — and want to swap the vault without rewriting your agent.
 
 ---
 

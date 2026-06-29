@@ -355,6 +355,29 @@ footer { max-width: var(--maxw); margin: 0 auto; padding: 40px var(--pad) 56px; 
 .foot-links a:hover { color: var(--seal); }
 .foot-links span { color: var(--muted); }
 
+/* ---- proof link under the race ----------------------------------------- */
+.proof-link { margin-top: 12px; font-size: 15px; color: var(--ink-soft); line-height: 1.6; }
+.proof-link a { color: var(--seal); border-bottom: 1px solid var(--seal-line); }
+
+/* ---- layer diagram (replaces the old parity table) --------------------- */
+.layers { max-width: 620px; margin: 0 auto; display: flex; flex-direction: column; }
+.layers .layer { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); padding: 16px 20px; }
+.layers .layer-mid { border-color: var(--seal-line); background: var(--seal-tint); }
+.layers .layer-tag { display: block; font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--seal); margin-bottom: 4px; }
+.layers .layer strong { display: block; font-family: var(--display); font-weight: 600; font-size: 17px; letter-spacing: -0.02em; color: var(--ink); }
+.layers .layer-eg { display: block; color: var(--muted); font-size: 13.5px; margin-top: 4px; }
+.layers .layer-arrow { display: flex; align-items: center; justify-content: center; gap: 8px; font-family: var(--mono); font-size: 12.5px; color: var(--ink-soft); padding: 9px 0; }
+.layers .layer-arrow span { color: var(--seal); }
+.layers .layer-arrow code { color: var(--ink-soft); }
+
+/* ---- "when you don't need nominee" band -------------------------------- */
+.when-not { max-width: 720px; margin: 44px auto 0; border: 1px dashed var(--line-2); border-radius: var(--radius); padding: 24px 28px; background: var(--paper-2); }
+.when-not-head { font-family: var(--display); font-weight: 600; font-size: 18px; letter-spacing: -0.02em; margin-bottom: 12px; }
+.when-not ul { list-style: none; display: grid; gap: 9px; }
+.when-not li { position: relative; padding-left: 22px; color: var(--ink-soft); font-size: 15px; line-height: 1.55; }
+.when-not li::before { content: '—'; position: absolute; left: 0; color: var(--seal); }
+.when-not-foot { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); color: var(--ink-soft); font-size: 15px; line-height: 1.6; }
+
 /* ---- a11y --------------------------------------------------------------- */
 :focus-visible { outline: 2px solid var(--seal); outline-offset: 2px; border-radius: 3px; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }

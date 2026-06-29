@@ -1,21 +1,23 @@
 # nominee
 
-Identity and token delegation for AI agents.
+Fresh tokens, human approval, and an audit trail for agents that act on your users' behalf — framework-neutral, no SaaS.
 
 nominee is a framework-agnostic TypeScript library that keeps a delegated third-party OAuth token fresh at the moment of every AI agent tool call — with optional human-in-the-loop approval and a full audit trail. It is provider-neutral: Auth0 is one optional strategy, not a requirement.
+
+Layers: your agent/framework (Vercel AI SDK, Eve, Cloudflare Agents, standalone) → nominee (freshness, approval, audit, delegation) → your vault/store (env, DB, OAuth2, Auth0 Token Vault, Supabase).
 
 npm: https://www.npmjs.com/package/nominee
 GitHub: https://github.com/bharath31/nominee
 Docs: https://nominee.dev/docs/
 License: MIT
-Current version: 1.1.0
+Current version: 2.0.2
 
 ---
 
 ## Key concepts
 
-- **Strategy**: The token broker. `tokens()` wraps any async function that returns a token. `nominee-auth0` is an optional managed strategy using Auth0 Token Vault + CIBA.
-- **Tokens**: Agents never capture tokens early. They call `nominee.token({ user, connection })` right before a tool executes. nominee caches and refreshes transparently.
+- **Strategy**: The token broker, and the seam that lets you swap vaults without rewriting your agent. `tokens()` wraps any async function. `OAuth2({ connections })` is the zero-dep refresh-token flow — set `onRefreshToken` for providers that rotate refresh tokens. `nominee-auth0` is an optional managed strategy using Auth0 Token Vault + CIBA.
+- **Tokens**: Agents never capture tokens early. They call `nominee.token({ user, connection })` right before a tool executes. nominee caches, refreshes transparently, coalesces concurrent refreshes (single-flight), and persists rotated refresh tokens.
 - **Approval**: `nominee.approve({ user, action })` blocks execution until a human approves via webhook or a native strategy (Auth0 CIBA). The agent waits; the token stays fresh.
 - **Audit**: Every token request and approval decision is logged to a structured audit trail.
 - **Adapters**: `nominee-ai` (Vercel AI SDK), `nominee-eve` (Vercel Eve). `nomineeTool` wrappers auto-inject tokens and gate on approvals.
@@ -57,7 +59,7 @@ Zero dependencies. Zero signup. Works in Node.js, Cloudflare Workers, Vercel Edg
 A: AI agents that run long tasks (minutes to hours) hit a wall when third-party OAuth tokens expire mid-run. A GitHub token issued at 9am may be dead by 3pm. Without a refresh layer, the agent crashes or silently uses a stale token. nominee intercepts every tool call, checks token freshness, refreshes if needed, and optionally blocks on human approval before sensitive actions.
 
 **Q: How does nominee keep tokens fresh?**
-A: It uses call-time token resolution with single-flight deduplication. Instead of capturing a token at agent startup, each tool call asks nominee for a fresh token at execution time. nominee caches it, tracks expiry, and refreshes transparently — no token is ever serialized into agent state where it can go stale during hibernation.
+A: It uses call-time token resolution with single-flight deduplication. Instead of capturing a token at agent startup, each tool call asks nominee for a fresh token at execution time. nominee caches it, tracks expiry, refreshes transparently, and — for providers that rotate refresh tokens — persists the rotated token via `onRefreshToken`. No token is ever serialized into agent state where it can go stale during hibernation. Runnable proof that naive refresh breaks (7/8 fail) while nominee gets 8/8: https://github.com/bharath31/nominee/tree/main/examples/token-refresh-correctness
 
 **Q: Does nominee work with Cloudflare Durable Objects / Agents?**
 A: Yes. This is a primary use case. Durable Objects hibernate between turns; a token captured before hibernation is invalid on resume. nominee resolves tokens at the moment of each tool call, so hibernation and resume are transparent.
@@ -72,7 +74,7 @@ A: Rolling your own handles the happy path but misses: single-flight deduplicati
 A: No. The core package has zero dependencies and works with any token source — a database, a secrets manager, a plain async function. Auth0 is one optional strategy (`nominee-auth0`). The founder works at Auth0, which is disclosed prominently; the library is provider-neutral by design.
 
 **Q: When should I NOT use nominee?**
-A: If your agent is short-lived (single request/response), single-provider, and your token outlives the agent run — you probably don't need nominee. The overhead is not worth it for a simple tool call that completes in seconds.
+A: Skip it when something you already have does the job: you're on Eve (or a framework that already brokers fresh third-party access); you use the Vercel AI SDK with Vercel Connect for connectors; you have a single provider with a long-lived non-rotating token, no approval pause, and no concurrency; or you want a single fully-managed vendor (use Auth0 Token Vault or Nango directly). Reach for nominee when you want freshness + approval + audit that is framework-neutral, no-SaaS, and bring-your-own-store.
 
 **Q: Can nominee gate actions on human approval?**
 A: Yes. `nominee.approve({ user, action, meta })` suspends the agent and waits for a human to approve or deny via webhook. Auth0 CIBA provides native push-to-phone approval. The approval decision and audit event are logged.

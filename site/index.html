@@ -3,17 +3,17 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>nominee — token delegation for AI agents</title>
+    <title>nominee — fresh tokens, approval & audit for AI agents</title>
     <meta
       name="description"
-      content="nominee hands your AI agent a fresh third-party token at the moment of each tool call — survives hibernation, pauses for human approval, logs the chain. Provider-neutral, zero-dependency core."
+      content="Fresh tokens, human approval, and an audit trail for agents that act on your users' behalf — framework-neutral, no SaaS. Naive OAuth refresh breaks under rotation + concurrency; nominee makes it correct with the same agent code."
     />
     <link rel="canonical" href="https://nominee.dev/" />
     <meta name="theme-color" content="#faf9f5" />
-    <meta property="og:title" content="nominee — token delegation for AI agents" />
+    <meta property="og:title" content="nominee — fresh tokens, approval & audit for AI agents" />
     <meta
       property="og:description"
-      content="A fresh third-party token at every tool call. Survives hibernation. Pauses for human approval. Provider-neutral, install and go."
+      content="Your agent's OAuth token refresh is probably broken under rotation + concurrency. nominee keeps tokens fresh at call time, gates on human approval, and audits it — framework-neutral, no SaaS."
     />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://nominee.dev/" />
@@ -21,10 +21,10 @@
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="nominee — token delegation for AI agents" />
+    <meta name="twitter:title" content="nominee — fresh tokens, approval & audit for AI agents" />
     <meta
       name="twitter:description"
-      content="A fresh third-party token at every tool call. Pauses for human approval. Provider-neutral."
+      content="Fresh tokens, human approval, and an audit trail for agents that act on your users' behalf — framework-neutral, no SaaS."
     />
     <meta name="twitter:image" content="https://nominee.dev/assets/og.png" />
     <link rel="icon" href="/assets/icon.svg" type="image/svg+xml" />
@@ -44,7 +44,7 @@
         "name": "nominee",
         "applicationCategory": "DeveloperApplication",
         "operatingSystem": "Node.js, Cloudflare Workers, any JS runtime",
-        "description": "Token delegation for AI agents: a fresh third-party token at each tool call, human-in-the-loop approval, and an audit trail. Provider-neutral.",
+        "description": "Fresh tokens, human approval, and an audit trail for agents that act on your users' behalf — framework-neutral, no SaaS. Correct OAuth refresh under rotation + concurrency.",
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
         "url": "https://nominee.dev/",
         "license": "https://opensource.org/licenses/MIT",
@@ -81,38 +81,36 @@
     <main>
       <section class="hero">
         <div class="hero-copy">
-          <p class="hero-tag">Token delegation for AI agents <span class="ref">· MIT</span></p>
-          <h1>Tokens expire.<br /><span class="ink-soft">Your agent keeps going.</span></h1>
+          <p class="hero-tag">OAuth for agents that act on your users' behalf <span class="ref">· MIT</span></p>
+          <h1>Fresh tokens, approval &amp; audit.<br /><span class="ink-soft">For agents that act for your users.</span></h1>
           <p class="lede">
-            nominee hands your agent a fresh third-party token at the moment of each
-            tool call. It survives hibernation, pauses for human approval, and logs
-            who authorized what.
+            Naive OAuth refresh breaks under rotation + concurrency. nominee keeps a
+            third-party token fresh at the moment of each tool call, pauses for human
+            approval, and logs who authorized what — <strong>framework-neutral, no SaaS</strong>.
           </p>
           <div class="hero-actions">
             <button class="copy" data-copy="npm i nominee" aria-label="Copy install command">
               <span class="prompt">›</span><span class="cmd">npm i nominee</span><span class="copy-hint">copy</span>
             </button>
+            <a class="text-link" href="#install">Add nominee in 20 lines →</a>
             <a class="text-link" href="/docs/">Docs →</a>
-            <a class="text-link" href="/agent">Live demo →</a>
           </div>
         </div>
 
-        <!-- the proof: one agent run, expiry and recovery and approval, start to finish -->
-        <div class="run" data-demo aria-label="Example agent run with nominee">
+        <!-- the insight, above the fold: naive concurrent + rotating refresh fails 7/8; nominee 8/8 -->
+        <div class="run" data-demo aria-label="Naive OAuth refresh vs nominee under rotation and concurrency">
           <div class="run-top">
             <span class="td-dot"></span><span class="td-dot"></span><span class="td-dot"></span>
-            <span class="run-title">triage-agent · run</span>
+            <span class="run-title">rotating refresh token · 8 concurrent calls</span>
           </div>
           <div class="run-body">
-            <p class="tl" data-d="120"><span class="muted">$</span> agent run <span class="str">"close stale issues in acme/api"</span></p>
-            <p class="tl" data-d="700"><span class="muted">→</span> tool <span class="hl">github.close_issue</span> <span class="muted">#1242</span></p>
-            <p class="tl bad" data-d="900"><span>✗</span> 401 — github token expired <span class="muted">(granted 6h ago)</span></p>
-            <p class="tl" data-d="800"><span class="acc">↻</span> nominee issues a fresh token… <span class="ok">valid</span></p>
-            <p class="tl" data-d="500"><span class="acc">?</span> countersignature required <span class="muted">close_issue · acme/api#1242</span></p>
-            <p class="tl dim" data-d="1100">&nbsp;&nbsp;&nbsp;▸ pushed to alice's phone, waiting…</p>
-            <p class="tl" data-d="700"><span class="ok">✓</span> countersigned by <span class="hl">alice</span> <span class="muted">(2.3s)</span></p>
-            <p class="tl" data-d="700"><span class="ok">✓</span> issue #1242 closed</p>
-            <p class="tl" data-d="900"><span class="acc">§</span> register <span class="muted">you → triage-bot → github</span> close_issue <span class="ok">approved</span></p>
+            <p class="tl" data-d="120"><span class="muted">$</span> agent fires <span class="str">8 tool calls</span> <span class="muted">— one rotating refresh token</span></p>
+            <p class="tl" data-d="800"><span class="muted">→</span> naive: each call refreshes on its own</p>
+            <p class="tl bad" data-d="900"><span>✗</span> 7/8 fail — <span class="hl">invalid_grant</span> <span class="muted">(rotation killed the rest)</span></p>
+            <p class="tl" data-d="900"><span class="acc">↻</span> nominee: single-flight + rotation persisted</p>
+            <p class="tl" data-d="700"><span class="ok">✓</span> 8/8 succeed <span class="muted">— one refresh, same agent code</span></p>
+            <p class="tl" data-d="700"><span class="acc">?</span> sensitive action? held for a human <span class="ok">countersignature</span></p>
+            <p class="tl" data-d="900"><span class="acc">§</span> every token + approval on the <span class="hl">audit register</span></p>
           </div>
         </div>
       </section>
@@ -149,6 +147,12 @@
             <code>nominee.token()</code> each time. The real <code>nominee</code>
             package runs in your browser — open the Network tab and watch the refresh.
           </p>
+          <p class="proof-link">
+            That's the expiry half. Add <strong>refresh-token rotation + concurrency</strong>
+            and naive code fails <strong>7/8</strong> while nominee gets <strong>8/8</strong> —
+            a runnable proof, no mocks that cheat:
+            <a href="https://github.com/bharath31/nominee/tree/main/examples/token-refresh-correctness">examples/token-refresh-correctness</a>.
+          </p>
         </div>
         <div class="race" data-race>
           <div class="race-clock"><span data-clock>starting…</span></div>
@@ -174,7 +178,7 @@
         </div>
 
         <div class="swap" style="margin-top:40px">
-          <p class="swap-head">Same agent code. Only the <code>strategy</code> line changes:</p>
+          <p class="swap-head">Start on your DB → Auth0 → Nango. Your agent code never changes — only the <code>strategy</code> line does. The Passport.js of agent auth, scoped to the no-lock-in tail:</p>
           <div class="code-card" data-tabs>
             <div class="code-top" role="tablist" aria-label="Swap the strategy">
               <button class="tab active" data-tab="fn" role="tab" aria-selected="true">function</button>
@@ -335,44 +339,49 @@
 
       <section class="section" id="why">
         <div class="section-head">
-          <p class="eyebrow">Why nominee</p>
-          <h2>Why not just use what you already have?</h2>
-          <p>Your orchestrator won't touch third-party auth. One IdP solves it but owns your stack. Here's the honest gap, side by side.</p>
+          <p class="eyebrow">Where nominee sits</p>
+          <h2>A thin, neutral seam — not another platform.</h2>
+          <p>
+            Your framework runs the agent but <em>by design</em> hands you the
+            third-party auth. A managed vault solves the mechanics — but wire one in
+            directly and you marry it. nominee is the layer in between: your agent asks
+            for a token at call time, nominee keeps it fresh and gated, and your vault
+            stays swappable underneath.
+          </p>
         </div>
-        <div class="compare-wrap">
-          <table class="compare">
-            <thead>
-              <tr>
-                <th scope="col">For agent third-party auth</th>
-                <th scope="col" class="hi">nominee</th>
-                <th scope="col">Vercel AI SDK</th>
-                <th scope="col">Cloudflare Agents</th>
-                <th scope="col">LangChain</th>
-                <th scope="col">Auth0 alone</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><th scope="row">Fresh token at execution time</th><td class="hi y" data-tip="Built in" aria-label="Built in"><span class="mk ok">✓</span></td><td class="x" data-tip="You build it" aria-label="You build it"><span class="mk no">✗</span></td><td class="x" data-tip="You build it" aria-label="You build it"><span class="mk no">✗</span></td><td class="x" data-tip="You build it" aria-label="You build it"><span class="mk no">✗</span></td><td class="y" data-tip="Token Vault" aria-label="Token Vault"><span class="mk ok">✓</span></td></tr>
-              <tr><th scope="row">Fresh token after durable resume</th><td class="hi y" data-tip="Re-resolves" aria-label="Re-resolves"><span class="mk ok">✓</span></td><td class="x" data-tip="No" aria-label="No"><span class="mk no">✗</span></td><td class="n" data-tip="State, not tokens" aria-label="Partial: state, not tokens"><span class="mk part">~</span></td><td class="n" data-tip="State, not tokens" aria-label="Partial: state, not tokens"><span class="mk part">~</span></td><td class="y" data-tip="Re-fetch" aria-label="Re-fetch"><span class="mk ok">✓</span></td></tr>
-              <tr><th scope="row">Provider-neutral (swap vendors)</th><td class="hi y" data-tip="Any provider" aria-label="Any provider"><span class="mk ok">✓</span></td><td class="x" data-tip="n/a" aria-label="n/a"><span class="mk no">✗</span></td><td class="x" data-tip="n/a" aria-label="n/a"><span class="mk no">✗</span></td><td class="x" data-tip="n/a" aria-label="n/a"><span class="mk no">✗</span></td><td class="x" data-tip="Auth0 only" aria-label="One provider only"><span class="mk no">✗</span></td></tr>
-              <tr><th scope="row">Zero-signup to start</th><td class="hi y" data-tip="Yes" aria-label="Yes"><span class="mk ok">✓</span></td><td class="x" data-tip="n/a" aria-label="n/a"><span class="mk no">✗</span></td><td class="x" data-tip="n/a" aria-label="n/a"><span class="mk no">✗</span></td><td class="x" data-tip="n/a" aria-label="n/a"><span class="mk no">✗</span></td><td class="x" data-tip="Tenant + setup" aria-label="Tenant + setup required"><span class="mk no">✗</span></td></tr>
-              <tr><th scope="row">Human-in-the-loop approval</th><td class="hi y" data-tip="Built in" aria-label="Built in"><span class="mk ok">✓</span></td><td class="n" data-tip="Primitives" aria-label="Partial: primitives"><span class="mk part">~</span></td><td class="x" data-tip="No" aria-label="No"><span class="mk no">✗</span></td><td class="y" data-tip="Interrupts" aria-label="Interrupts"><span class="mk ok">✓</span></td><td class="y" data-tip="CIBA" aria-label="CIBA"><span class="mk ok">✓</span></td></tr>
-              <tr><th scope="row">Audit log (who authorized what)</th><td class="hi y" data-tip="Built in" aria-label="Built in"><span class="mk ok">✓</span></td><td class="x" data-tip="No" aria-label="No"><span class="mk no">✗</span></td><td class="x" data-tip="No" aria-label="No"><span class="mk no">✗</span></td><td class="n" data-tip="LangSmith" aria-label="Partial: LangSmith"><span class="mk part">~</span></td><td class="y" data-tip="Tenant logs" aria-label="Tenant logs"><span class="mk ok">✓</span></td></tr>
-            </tbody>
-          </table>
+        <div class="layers" role="img" aria-label="Three layers: your agent or framework on top, nominee in the middle, your vault or store at the bottom.">
+          <div class="layer">
+            <span class="layer-tag">your agent / framework</span>
+            <strong>asks for a token at call time</strong>
+            <span class="layer-eg">Vercel AI SDK · Eve · Cloudflare Agents · standalone</span>
+          </div>
+          <div class="layer-arrow"><span>▼</span> <code>token({ user, connection })</code></div>
+          <div class="layer layer-mid">
+            <span class="layer-tag">nominee</span>
+            <strong>freshness · approval · audit · delegation</strong>
+            <span class="layer-eg">single-flight refresh · rotation persistence · human-in-the-loop</span>
+          </div>
+          <div class="layer-arrow"><span>▼</span> <code>strategy.getToken()</code></div>
+          <div class="layer">
+            <span class="layer-tag">your vault / store</span>
+            <strong>where the refresh token actually lives</strong>
+            <span class="layer-eg">env · DB · OAuth2 · Auth0 Token Vault · Supabase · Nango</span>
+          </div>
         </div>
-        <p class="compare-note">
-          Orchestrators run the agent but <em>by design</em> hand you the third-party
-          auth. A managed identity provider solves the mechanics beautifully — but wire
-          one in directly and you marry it. nominee is the neutral seam between them:
-          start with a function, swap to a managed provider in one line.
-        </p>
-        <p class="compare-note muted">
-          <strong>When you don't need nominee:</strong> a single-provider, short-lived,
-          non-durable app — use your IdP's SDK or ~20 lines of refresh. nominee earns
-          its place when agents are long-running, durable, multi-provider, or you
-          refuse lock-in.
-        </p>
+        <div class="when-not">
+          <p class="when-not-head">When you <em>don't</em> need nominee</p>
+          <ul>
+            <li><strong>You're on Eve</strong>, or a framework that already brokers fresh third-party access — use its native auth.</li>
+            <li><strong>You use the Vercel AI SDK with Vercel Connect</strong> for connectors — Connect already manages the tokens.</li>
+            <li><strong>One provider, a long-lived non-rotating token, no pause, no concurrency</strong> — a plain refresh is genuinely enough.</li>
+            <li><strong>You want one fully-managed vendor</strong> — use Auth0 Token Vault or Nango directly.</li>
+          </ul>
+          <p class="when-not-foot">
+            Reach for nominee when you want freshness + approval + audit that's
+            <strong>framework-neutral, no-SaaS, and bring-your-own-store</strong> — and want to
+            swap the vault without rewriting your agent.
+          </p>
+        </div>
       </section>
 
       <section class="section" id="packages">

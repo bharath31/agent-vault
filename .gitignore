@@ -17,6 +17,7 @@ AGENTS.local.md
 PROGRESS.local.md
 *.local.md
 launch/
+LAUNCH.md
 
 .wrangler/
 

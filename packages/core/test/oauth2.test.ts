@@ -76,3 +76,50 @@ describe('OAuth2 strategy', () => {
     expect(fetch).toHaveBeenCalledTimes(1) // cached
   })
 })
+
+describe('OAuth2 refresh-token rotation', () => {
+  it('persists the rotated refresh_token via onRefreshToken and uses it next cycle', async () => {
+    // A mock token endpoint that ROTATES: each refresh invalidates the old
+    // refresh token and issues a new one. This is what GitHub/Google/Okta do.
+    const valid = new Set(['rt_seed'])
+    let mintCount = 0
+    const rotatingFetch = (async (_url: string, init: RequestInit) => {
+      const sent = new URLSearchParams(init.body as string).get('refresh_token')!
+      if (!valid.has(sent)) {
+        return new Response(JSON.stringify({ error: 'invalid_grant' }), { status: 400 })
+      }
+      valid.delete(sent) // rotate: old token is now dead
+      const next = `rt_${++mintCount}`
+      valid.add(next)
+      return new Response(
+        JSON.stringify({ access_token: `at_${mintCount}`, expires_in: 1, refresh_token: next }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      )
+    }) as unknown as typeof fetch
+
+    // The caller's "store": a single mutable refresh token, written back on rotation.
+    let stored = 'rt_seed'
+    const strat = OAuth2({
+      fetch: rotatingFetch,
+      connections: {
+        github: {
+          tokenEndpoint: 'https://example.com/token',
+          clientId: 'cid',
+          refreshToken: () => stored,
+          onRefreshToken: (_p, rt) => {
+            stored = rt
+          },
+        },
+      },
+    })
+
+    const a = await strat.getToken({ user: 'alice', connection: 'github' })
+    expect(a.token).toBe('at_1')
+    expect(stored).toBe('rt_1') // rotated token was persisted
+
+    // Second cycle must use the rotated token, not the dead seed.
+    const b = await strat.getToken({ user: 'alice', connection: 'github' })
+    expect(b.token).toBe('at_2')
+    expect(stored).toBe('rt_2')
+  })
+})

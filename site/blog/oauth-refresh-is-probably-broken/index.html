@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Your AI agent's OAuth token refresh is probably broken — nominee</title>
+    <meta name="description" content="Short-lived access tokens break grab-up-front across an approval pause. Rotating refresh tokens break naive refresh under concurrency — 7/8 calls fail with invalid_grant. A runnable proof, and the tiny no-SaaS fix." />
+    <meta name="theme-color" content="#ffffff" />
+    <link rel="canonical" href="https://nominee.dev/blog/oauth-refresh-is-probably-broken/" />
+    <meta property="og:title" content="Your AI agent's OAuth token refresh is probably broken" />
+    <meta property="og:description" content="Rotating refresh tokens + concurrency make naive refresh fail 7/8 with invalid_grant. Here's the runnable proof and the tiny no-SaaS fix." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://nominee.dev/blog/oauth-refresh-is-probably-broken/" />
+    <meta property="og:image" content="https://nominee.dev/assets/og-blog-token.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="article:published_time" content="2026-06-29" />
+    <meta property="article:author" content="Bharath" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Your AI agent's OAuth token refresh is probably broken" />
+    <meta name="twitter:description" content="Rotating refresh tokens + concurrency make naive refresh fail 7/8 with invalid_grant. Here's the runnable proof and the tiny no-SaaS fix." />
+    <meta name="twitter:image" content="https://nominee.dev/assets/og-blog-token.png" />
+    <link rel="icon" href="/assets/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/assets/icon-192.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "headline": "Your AI agent's OAuth token refresh is probably broken",
+      "description": "Short-lived access tokens break grab-up-front across an approval pause. Rotating refresh tokens break naive refresh under concurrency — 7/8 calls fail with invalid_grant. A runnable proof, and the tiny no-SaaS fix.",
+      "datePublished": "2026-06-29",
+      "author": { "@type": "Person", "name": "Bharath", "url": "https://bharath.sh" },
+      "publisher": { "@type": "Organization", "name": "nominee", "url": "https://nominee.dev" },
+      "url": "https://nominee.dev/blog/oauth-refresh-is-probably-broken/"
+    }
+    </script>
+  </head>
+  <body>
+    <div class="frame" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="nominee home">
+        <svg class="brand-seal" viewBox="0 0 40 40" aria-hidden="true">
+          <g fill="none" stroke="currentColor" stroke-opacity="0.9" stroke-width="1">
+            <circle cx="20" cy="20" r="15" /><circle cx="20" cy="20" r="11" stroke-opacity="0.5" />
+            <ellipse cx="20" cy="20" rx="15" ry="5" stroke-opacity="0.5" />
+            <ellipse cx="20" cy="20" rx="15" ry="5" stroke-opacity="0.5" transform="rotate(60 20 20)" />
+            <ellipse cx="20" cy="20" rx="15" ry="5" stroke-opacity="0.5" transform="rotate(120 20 20)" />
+          </g>
+        </svg>
+        <span>nominee</span>
+      </a>
+      <nav aria-label="Primary">
+        <a href="/#how">How it works</a>
+        <a href="/#why">Why nominee</a>
+        <a href="/docs/">Docs</a>
+        <a href="/blog/" aria-current="page">Blog</a>
+        <a class="nav-cta" href="https://github.com/bharath31/nominee">GitHub ↗</a>
+      </nav>
+    </header>
+
+    <main>
+      <article class="post-article">
+        <div class="post-article-header">
+          <a class="post-back" href="/blog/">← Blog</a>
+          <div class="post-article-meta">
+            <span class="post-date">June 29, 2026</span>
+            <span class="post-tag">Engineering</span>
+          </div>
+          <h1>Your AI agent's OAuth token<br>refresh is probably broken.</h1>
+          <p class="post-byline">By <a href="https://bharath.sh">Bharath</a> · 6 min read</p>
+          <p class="post-disclosure">I work at Auth0. nominee's core is zero-dependency and provider-neutral; Auth0 is one optional strategy of many. This post is about a correctness bug in how most agents refresh tokens — not a pitch for any vendor.</p>
+        </div>
+
+        <div class="post-body">
+
+          <p>"Just refresh the token" looks like a five-line problem. For a lot of agents it quietly isn't — and the failure only shows up in production, under load, after a human took a few seconds to click approve.</p>
+
+          <p>Two things real OAuth providers do break the naive approaches:</p>
+
+          <ul>
+            <li><strong>Short-lived access tokens.</strong> They expire in minutes.</li>
+            <li><strong>Rotating refresh tokens.</strong> Each refresh <em>invalidates</em> the refresh token you just used and issues a new one — GitHub Apps, Google one-time-use, Okta, Auth0 rotation all do this.</li>
+          </ul>
+
+          <hr class="post-rule" />
+
+          <h2>The repro</h2>
+
+          <p>Here's a deliberately honest test: a mock OAuth server with a 2-second access-token TTL, rotating refresh tokens, and real latency on the token endpoint. An agent fires eight tool calls at once (a normal thing for an agent to do), each asking for a token. The "obvious" fix — every call reads the stored refresh token and refreshes — produces this:</p>
+
+          <pre><code><span class="muted">$</span> node run.mjs
+
+A) naive (hold access token across pause):   resource → <span class="bad">401 token_expired</span>
+B) nominee (refresh at call time):           before → 200 OK | after pause → <span class="ok">200 OK</span>
+C) nominee + 8 concurrent calls:             network refreshes = <span class="ok">1</span> (single-flight) | resource 200s = <span class="ok">8/8</span>
+D) refresh WITHOUT single-flight (8 concurrent): network refreshes = 8 | invalid_grant failures = <span class="bad">7/8</span></code></pre>
+
+          <p>Row <strong>D</strong> is the bug. Eight calls each read the same stored refresh token and refresh independently. The first one to land rotates it — and that <em>invalidates</em> the token the other seven are still holding. Seven come back <code>invalid_grant</code>. Worse, depending on who writes last, your stored refresh token can end up pointing at a dead value, and now the connection is broken until the user re-consents.</p>
+
+          <p>Row <strong>A</strong> is the simpler cousin: grab the access token up front, pause for human approval, act after the pause — by then it's expired.</p>
+
+          <hr class="post-rule" />
+
+          <h2>Why it's not a 5-line happy path</h2>
+
+          <p>Getting this right means handling, all at once:</p>
+
+          <ul>
+            <li><strong>Resolve at call time</strong>, not at startup — so a token never goes stale across a pause or a durable-execution hibernation.</li>
+            <li><strong>Single-flight</strong> — concurrent cache-misses for the same key must share <em>one</em> network refresh. Without it, rotation makes concurrency actively corrupt state.</li>
+            <li><strong>Persist the rotated refresh token atomically</strong>, before returning — or the next refresh uses a dead token.</li>
+            <li><strong>Surface re-consent</strong> on a genuinely dead refresh token instead of retrying forever.</li>
+          </ul>
+
+          <p>None of these is hard alone. Together, written under deadline, they're where the incident comes from.</p>
+
+          <hr class="post-rule" />
+
+          <h2>The fix, runnable</h2>
+
+          <p>The whole thing above is a real, runnable example — no mocks that cheat, the server really rotates and really expires:</p>
+
+          <pre><code><span class="k">git clone</span> https://github.com/bharath31/nominee
+<span class="k">cd</span> nominee/examples/token-refresh-correctness
+pnpm install && node run.mjs</code></pre>
+
+          <p>Rows B and C are nominee. The agent code doesn't change — you just ask nominee for the token instead of holding one, and give it one line to persist the rotated refresh token:</p>
+
+          <pre><code><span class="k">import</span> { <span class="t">Nominee</span>, <span class="t">OAuth2</span> } <span class="k">from</span> <span class="s">'nominee'</span>
+
+<span class="k">const</span> nominee = <span class="k">new</span> <span class="t">Nominee</span>({
+  strategy: <span class="fn">OAuth2</span>({
+    connections: {
+      github: {
+        tokenEndpoint, clientId,
+        refreshToken: () => store.<span class="fn">get</span>(<span class="s">'alice'</span>).refreshToken,   <span class="c">// read from your store</span>
+        <span class="fn">onRefreshToken</span>: (_p, rt) =>                            <span class="c">// write the rotated one back</span>
+          store.<span class="fn">set</span>(<span class="s">'alice'</span>, { ...store.<span class="fn">get</span>(<span class="s">'alice'</span>), refreshToken: rt }),
+      },
+    },
+  }),
+})
+
+<span class="c">// at the moment of the tool call — never held across the pause:</span>
+<span class="k">const</span> token = <span class="k">await</span> nominee.<span class="fn">token</span>({ user: <span class="s">'alice'</span>, connection: <span class="s">'github'</span> })</code></pre>
+
+          <p>nominee does the proactive refresh, the single-flight coalescing, and the atomic rotation persistence for you. That's the entire correctness kernel — the core is zero-dependency, and there's no service to sign up for.</p>
+
+          <hr class="post-rule" />
+
+          <h2>When you don't need it</h2>
+
+          <p>I want to be explicit, because it matters for credibility:</p>
+
+          <ul>
+            <li>If your provider issues <strong>long-lived, non-rotating</strong> tokens and your agent never pauses or fans out, the naive path is genuinely fine.</li>
+            <li>If you're on <strong>Eve</strong> or a framework that already brokers fresh third-party access, use its native auth.</li>
+            <li>If you use the <strong>Vercel AI SDK with Vercel Connect</strong>, Connect already manages the tokens.</li>
+            <li>If you want a single <strong>fully-managed vendor</strong>, use Auth0 Token Vault or Nango directly.</li>
+          </ul>
+
+          <p>nominee is for the case where you want this correct <strong>framework-neutral, with no SaaS, and bring-your-own-store</strong> — and want to swap the vault underneath without rewriting your agent. I pulled the correct version out of a few too many hand-rolled refresh layers and made it a tiny library. If the repro above looks familiar, it'll save you the incident.</p>
+
+          <div class="post-cta-block">
+            <p class="eyebrow">See it for yourself</p>
+            <p class="cta-head">Run the 7/8 → 8/8 proof in 30 seconds.</p>
+            <div class="post-cta-install">
+              <span class="prompt">$</span> npm i nominee
+              <span class="copy-hint">zero deps</span>
+            </div>
+            <div class="post-cta-links">
+              <a class="star-cta" href="https://github.com/bharath31/nominee"><span class="gh-star">★</span> Star on GitHub</a>
+              <a class="text-link" href="https://github.com/bharath31/nominee/tree/main/examples/token-refresh-correctness">The runnable proof →</a>
+              <a class="text-link" href="/docs/">Read the docs →</a>
+            </div>
+          </div>
+
+        </div>
+      </article>
+    </main>
+
+    <footer>
+      <div class="foot-brand">
+        <svg class="brand-seal" viewBox="0 0 40 40" aria-hidden="true">
+          <g fill="none" stroke="currentColor" stroke-opacity="0.8" stroke-width="1">
+            <circle cx="20" cy="20" r="15" /><circle cx="20" cy="20" r="11" stroke-opacity="0.5" />
+          </g>
+        </svg>
+        <span>nominee</span>
+      </div>
+      <p class="foot-note">
+        Built by <a href="https://bharath.sh">Bharath</a> at Auth0. Neutral by design.
+        Auth0 is one strategy of many. PRs for other providers welcome.
+      </p>
+      <div class="foot-links">
+        <a href="https://github.com/bharath31/nominee">GitHub</a>
+        <a href="/docs/">Docs</a>
+        <a href="https://www.npmjs.com/package/nominee">npm</a>
+        <a href="/blog/">Blog</a>
+        <span>MIT</span>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -3,12 +3,14 @@ import { z } from 'zod'
 import { BrokerError, brokerMerge, requestAccess } from '../../lib/broker.js'
 import { APPROVAL_PAUSE_MS } from '../../lib/constants.js'
 
-// The plain "merge a PR" tool — the hand-rolled way most people write first.
-// It requests merge access up front, waits for approval, then merges with the
-// access it grabbed. But just-in-time access is short-lived (by design), so by
-// the time the agent acts, the broker has genuinely expired it → the merge is
-// rejected (real HTTP 403, not a simulation). This is the problem nominee
-// removes (see merge_pr_with_nominee).
+// The plain "merge a PR" tool — the natural-but-wrong first attempt. It grabs
+// merge access up front, waits for approval, then merges with the access it
+// grabbed. But just-in-time access is short-lived (by design), so by the time
+// the agent acts, the broker has genuinely expired it → the merge is rejected
+// (real HTTP 403, not a simulation). It's the same class of bug as a stale
+// OAuth token across a pause — see examples/token-refresh-correctness for the
+// general case (expiry + rotation + concurrency). merge_pr_with_nominee fixes it
+// by resolving access at call time instead.
 export default defineTool({
   description: 'Merge a pull request (the plain, hand-rolled way).',
   inputSchema: z.object({
@@ -29,7 +31,7 @@ export default defineTool({
       // conflict / already-merged PR / branch protection is a different failure.
       const expired = e instanceof BrokerError && e.expired
       return expired
-        ? `✗ ${message}\n(The access I grabbed expired during the pause. This is what nominee fixes.)`
+        ? `✗ ${message}\n(The access I grabbed expired during the pause — the staleness nominee handles by resolving at call time.)`
         : `✗ ${message}`
     }
   },

@@ -1,0 +1,14 @@
+{
+  "name": "token-refresh-correctness",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Runnable proof: naive OAuth refresh breaks under rotation + concurrency (7/8 fail); nominee gets 8/8 with the same agent code.",
+  "scripts": {
+    "demo": "node run.mjs",
+    "server": "node oauth-server.mjs"
+  },
+  "dependencies": {
+    "nominee": "workspace:*"
+  }
+}

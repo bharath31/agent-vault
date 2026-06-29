@@ -6,7 +6,7 @@
     <title>Docs — nominee</title>
     <meta
       name="description"
-      content="nominee docs: install, strategies, human approval, framework adapters, the core API, errors, audit events, and security."
+      content="nominee docs: what it is, when you don't need it, quickstart, token freshness done right (rotation + single-flight), approvals, audit, strategies, framework adapters, and the security model."
     />
     <meta name="theme-color" content="#ffffff" />
     <link rel="icon" href="/assets/icon.svg" type="image/svg+xml" />
@@ -17,6 +17,19 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/styles.css" />
+    <style>
+      /* Layer diagram: framework | nominee | vault. Scoped to docs. */
+      .layer-diagram { margin: 22px 0 6px; display: flex; flex-direction: column; gap: 0; max-width: 660px; }
+      .layer-diagram .layer { border: 1px solid var(--hairline); border-radius: 10px; background: var(--raised); padding: 13px 16px; }
+      .layer-diagram .layer-mid { border-color: var(--seal); background: var(--seal-tint); }
+      .layer-diagram .layer-tag { display: block; font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--seal); margin-bottom: 3px; }
+      .layer-diagram .layer strong { display: block; color: var(--paper); font-weight: 600; font-size: 15px; }
+      .layer-diagram .layer-eg { display: block; color: var(--muted); font-size: 13px; margin-top: 3px; }
+      .layer-diagram .layer-arrow { font-family: var(--mono); font-size: 12px; color: var(--paper-soft); text-align: center; padding: 7px 0; }
+      .layer-diagram .layer-arrow code { background: none; color: var(--seal); }
+      .callout { border-left: 2px solid var(--seal); background: var(--seal-tint); padding: 10px 14px; border-radius: 0 8px 8px 0; margin: 14px 0; color: var(--paper-soft); }
+      .when-not li { margin: 7px 0; }
+    </style>
   </head>
   <body>
     <div class="frame" aria-hidden="true"></div>
@@ -35,7 +48,6 @@
       </a>
       <nav aria-label="Primary">
         <a href="/">Home</a>
-        <a href="/#compare">Why nominee</a>
         <a href="/#packages">Packages</a>
         <a href="/blog/">Blog</a>
         <a class="nav-cta" href="https://github.com/bharath31/nominee">GitHub ↗</a>
@@ -45,40 +57,86 @@
     <div class="docs-wrap">
       <aside class="docs-side" aria-label="Docs navigation">
         <span class="grp">Start</span>
-        <a href="#install">Install</a>
+        <a href="#what">What nominee is</a>
+        <a href="#when-not">When you don't need it</a>
         <a href="#quickstart">Quickstart</a>
+        <span class="grp">Core</span>
+        <a href="#freshness">Token freshness</a>
+        <a href="#approval">Approvals</a>
+        <a href="#audit">Audit</a>
+        <span class="grp">Build</span>
         <a href="#strategies">Strategies</a>
-        <span class="grp">Use</span>
-        <a href="#approval">Human approval</a>
         <a href="#adapters">Framework adapters</a>
-        <a href="#auth0">Auth0 (optional)</a>
         <span class="grp">Reference</span>
         <a href="#api">Core API</a>
         <a href="#errors">Errors</a>
-        <a href="#audit">Audit events</a>
-        <a href="#security">Security</a>
+        <a href="#security">Security model</a>
       </aside>
 
       <article class="docs-main">
         <h1>Documentation</h1>
         <p class="lede">
-          nominee sits between your agent and your users' third-party accounts. Ask
-          for a token at execution time; nominee handles caching, refresh, approval,
-          and audit.
+          nominee keeps the third-party tokens your agent uses <strong>fresh at the moment of
+          each tool call</strong>, gates sensitive actions behind <strong>human approval</strong>,
+          and writes an <strong>audit trail</strong> — framework-neutral, with no SaaS.
         </p>
 
-        <section id="install" class="doc-section">
-          <h2>Install</h2>
-          <pre><code>npm i nominee</code></pre>
+        <section id="what" class="doc-section">
+          <h2>What nominee is</h2>
           <p>
-            The core package has <strong>zero runtime dependencies</strong>. Add an
-            adapter (<code>nominee-ai</code>, <code>nominee-eve</code>) or a managed
-            strategy (<code>nominee-auth0</code>) only when you need it.
+            nominee sits between your agent and your users' third-party accounts. Instead of
+            capturing a token when the agent starts (it goes stale across a pause or a
+            hibernation), your tool asks nominee for a token at the instant it acts. nominee
+            handles freshness, refresh, refresh-token rotation, single-flight, approval, and audit
+            — and delegates the actual token storage to a pluggable <em>strategy</em>.
+          </p>
+
+          <div class="layer-diagram" role="img" aria-label="Three layers: your agent or framework on top, nominee in the middle, your vault or store at the bottom.">
+            <div class="layer">
+              <span class="layer-tag">your agent / framework</span>
+              <strong>asks for a token at call time</strong>
+              <span class="layer-eg">Vercel AI SDK · Eve · Cloudflare Agents · standalone</span>
+            </div>
+            <div class="layer-arrow">▼&nbsp;&nbsp;<code>token({ user, connection })</code></div>
+            <div class="layer layer-mid">
+              <span class="layer-tag">nominee</span>
+              <strong>freshness · approval · audit · delegation</strong>
+              <span class="layer-eg">single-flight refresh · rotation persistence · human-in-the-loop</span>
+            </div>
+            <div class="layer-arrow">▼&nbsp;&nbsp;<code>strategy.getToken()</code></div>
+            <div class="layer">
+              <span class="layer-tag">your vault / store</span>
+              <strong>where the refresh token actually lives</strong>
+              <span class="layer-eg">env · DB · OAuth2 · Auth0 Token Vault · Supabase</span>
+            </div>
+          </div>
+
+          <p>
+            The core is dependency-free. Think of it as <em>the Passport.js of agent auth</em> —
+            scoped to the multi-framework, no-lock-in, standalone tail, where you want this
+            behaviour without buying into one vendor's runtime.
+          </p>
+        </section>
+
+        <section id="when-not" class="doc-section">
+          <h2>When you don't need nominee</h2>
+          <p>nominee is a focused utility, not a platform. Skip it when something you already have does the job:</p>
+          <ul class="when-not">
+            <li><strong>You're on Eve, or a framework that already brokers fresh third-party access.</strong> Use its native auth — nominee would duplicate it.</li>
+            <li><strong>You use the Vercel AI SDK with Vercel Connect for connectors.</strong> Connect already manages the tokens; reach for nominee only if you need it framework-neutral or outside Connect's catalogue.</li>
+            <li><strong>One provider, a long-lived non-rotating token, no approval pause, no concurrency.</strong> A plain refresh call is genuinely enough.</li>
+            <li><strong>You want a fully managed vault and are happy with one vendor.</strong> Use Auth0 Token Vault or Nango directly.</li>
+          </ul>
+          <p>
+            Reach for nominee when you want freshness + approval + audit that is
+            <strong>framework-neutral, no-SaaS, and bring-your-own-store</strong> — and when you
+            want to swap the vault underneath without rewriting your agent.
           </p>
         </section>
 
         <section id="quickstart" class="doc-section">
           <h2>Quickstart</h2>
+          <pre><code>npm i nominee</code></pre>
           <p>The whole setup is a function that returns a token. No provider, no signup.</p>
           <pre><code>import { Nominee } from 'nominee'
 
@@ -92,36 +150,66 @@ const nominee = new Nominee({
 // at the moment the tool runs — always fresh, cached until just before expiry
 const token = await nominee.token({ user: 'alice', connection: 'github' })</code></pre>
           <p>
-            <strong>Rule of thumb:</strong> never store the returned token in your own
-            agent state. Call <code>nominee.token()</code> at the moment of the call —
-            that's what survives long-running and durable execution.
+            <strong>Rule of thumb:</strong> never store the returned token in your own agent
+            state. Call <code>nominee.token()</code> at the moment of the call — that's what
+            survives long-running and durable execution.
           </p>
           <p>
-            Don't want to bring your own tokens? Let Auth0 manage Token Vault + push
-            approvals — also one line: <code>new Nominee({ strategy: auth0() })</code>.
-            See <a href="#auth0">Auth0</a>.
+            Don't want to bring your own tokens? Let Auth0 manage Token Vault + push approvals,
+            also one line: <code>new Nominee({ strategy: auth0() })</code> — see
+            <a href="#strategies">Strategies</a>.
           </p>
         </section>
 
-        <section id="strategies" class="doc-section">
-          <h2>Strategies</h2>
-          <p>A strategy tells nominee how to get a token. Pass one to <code>new Nominee({ strategy })</code>. A plain function is the simplest strategy.</p>
-          <table class="api-table">
-            <thead><tr><th>Strategy</th><th>Use it for</th></tr></thead>
-            <tbody>
-              <tr><td><code>(params) =&gt; token</code></td><td>The default. A function returning a string or <code>{ token, expiresAt?, scopes? }</code>.</td></tr>
-              <tr><td><code>tokens(fn)</code></td><td>The same, but named — wrap an env var or DB lookup.</td></tr>
-              <tr><td><code>OAuth2({ connections })</code></td><td>Generic refresh-token flow. Zero deps. Bring your stored refresh tokens.</td></tr>
-              <tr><td><code>Memory({ tokens })</code></td><td>Seed tokens in memory for dev, examples, and tests.</td></tr>
-              <tr><td><code>Supabase({ url, key })</code></td><td>Read &amp; refresh provider tokens stored in Supabase. From <code>nominee-supabase</code>.</td></tr>
-              <tr><td><code>Auth0({ ... })</code></td><td>Optional managed strategy — Token Vault + CIBA. From <code>nominee-auth0</code>.</td></tr>
-            </tbody>
-          </table>
-          <p>Implementing your own is one method, <code>getToken()</code> — see <a href="https://github.com/bharath31/nominee/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>.</p>
+        <section id="freshness" class="doc-section">
+          <h2>Token freshness done right</h2>
+          <p>
+            "Just refresh the token" is a five-line happy path until you meet two things real
+            providers do: <strong>short-lived access tokens</strong> and <strong>rotating refresh
+            tokens</strong> (GitHub Apps, Google one-time-use, Okta, Auth0 rotation). Then the
+            naive approaches break:
+          </p>
+          <ul>
+            <li><strong>Grab-up-front breaks across a pause.</strong> An agent that captures the access token, then waits for human approval, acts with an expired token → 401.</li>
+            <li><strong>Naive refresh breaks under concurrency.</strong> A real agent fires many tool calls at once. Each reads the same stored refresh token and refreshes independently; rotation invalidates the others mid-flight → <code>invalid_grant</code>, and your stored token can corrupt.</li>
+          </ul>
+          <p>nominee makes both correct, with no change to your tool code:</p>
+          <ul>
+            <li><strong>Fresh at call time.</strong> Cached per (user, connection) until <code>expiryLeewayMs</code> before expiry (default 60s), then refreshed.</li>
+            <li><strong>Single-flight.</strong> Concurrent cache-misses for the same key share one network refresh — no stampede, no rotation race.</li>
+            <li><strong>Rotation persisted.</strong> When the provider rotates the refresh token, nominee hands it back via <code>onRefreshToken</code> so the next refresh uses the live token.</li>
+          </ul>
+          <div class="callout">
+            See the runnable proof — naive concurrent + rotating refresh fails <strong>7/8</strong>,
+            nominee gets <strong>8/8</strong> with the same agent code:
+            <a href="https://github.com/bharath31/nominee/tree/main/examples/token-refresh-correctness">examples/token-refresh-correctness</a>.
+          </div>
+          <p>With the <code>OAuth2</code> strategy, the one line that makes rotation correct is <code>onRefreshToken</code>:</p>
+          <pre><code>import { Nominee, OAuth2 } from 'nominee'
+
+const nominee = new Nominee({
+  strategy: OAuth2({
+    connections: {
+      github: {
+        tokenEndpoint: 'https://github.com/login/oauth/access_token',
+        clientId: process.env.GITHUB_CLIENT_ID!,
+        clientSecret: process.env.GITHUB_CLIENT_SECRET,
+        refreshToken: () => store.get('alice').refreshToken,   // read from your store
+        onRefreshToken: (_p, rt) =>                            // write the rotated one back
+          store.set('alice', { ...store.get('alice'), refreshToken: rt }),
+      },
+    },
+  }),
+})</code></pre>
+          <p>
+            Need to drop a token immediately (e.g. you revoked access upstream)? Call
+            <code>nominee.invalidate(user, connection)</code>; the next <code>token()</code>
+            re-resolves. <code>token({ force: true })</code> bypasses the cache for one call.
+          </p>
         </section>
 
         <section id="approval" class="doc-section">
-          <h2>Human approval</h2>
+          <h2>Approvals</h2>
           <p>Gate sensitive actions. <code>approve()</code> blocks until a decision and throws <code>ApprovalDeniedError</code> if denied or expired.</p>
           <pre><code>try {
   await nominee.approve({
@@ -135,9 +223,8 @@ const token = await nominee.token({ user: 'alice', connection: 'github' })</code
   // ApprovalDeniedError: denied or expired
 }</code></pre>
           <p>
-            If the strategy implements native approval (e.g. Auth0 CIBA), nominee
-            delegates to it. Otherwise the built-in engine pauses until your webhook
-            resolves it:
+            If the strategy implements native approval (e.g. Auth0 CIBA), nominee delegates to it.
+            Otherwise the built-in engine pauses until your webhook resolves it:
           </p>
           <pre><code>// in your Nominee config:
 onApprovalRequest: (req) => notifyUser(req), // req.id, req.user, req.action, req.detail
@@ -146,9 +233,44 @@ onApprovalRequest: (req) => notifyUser(req), // req.id, req.user, req.action, re
 nominee.resolveApproval(req.id, 'approved') // or 'denied'</code></pre>
         </section>
 
+        <section id="audit" class="doc-section">
+          <h2>Audit</h2>
+          <p>Every privileged op emits an event to <code>onAudit</code> / <code>on()</code>. Event <code>type</code> is one of:</p>
+          <p><code>token.issued</code> · <code>token.cached</code> · <code>token.error</code> · <code>token.invalidated</code> · <code>token.exchanged</code> · <code>approval.requested</code> · <code>approval.resolved</code> · <code>authz.checked</code></p>
+          <p>Each event includes <code>{ type, user, agent?, connection?, action?, resource?, decision?, chain?, at, detail? }</code>. <code>chain</code> is the delegation chain (e.g. <code>['orchestrator', 'research-agent']</code>), <code>at</code> is epoch ms. Pipe it to durable storage so you can always answer "who authorized this, and on whose behalf?".</p>
+        </section>
+
+        <section id="strategies" class="doc-section">
+          <h2>Strategies</h2>
+          <p>A strategy tells nominee how to get a token — it's the seam that lets you <strong>swap vaults without rewriting your agent</strong>. Pass one to <code>new Nominee({ strategy })</code>. A plain function is the simplest.</p>
+          <table class="api-table">
+            <thead><tr><th>Strategy</th><th>Use it for</th></tr></thead>
+            <tbody>
+              <tr><td><code>(params) =&gt; token</code></td><td>The default. A function returning a string or <code>{ token, expiresAt?, scopes? }</code>.</td></tr>
+              <tr><td><code>tokens(fn)</code></td><td>The same, but named — wrap an env var or DB lookup.</td></tr>
+              <tr><td><code>OAuth2({ connections })</code></td><td>Generic refresh-token flow. Zero deps. Bring your stored refresh tokens; set <code>onRefreshToken</code> for rotating providers.</td></tr>
+              <tr><td><code>Memory({ tokens })</code></td><td>Seed tokens in memory for dev, examples, and tests.</td></tr>
+              <tr><td><code>Supabase({ url, key })</code></td><td>Read &amp; refresh provider tokens stored in Supabase. From <code>nominee-supabase</code>.</td></tr>
+              <tr><td><code>auth0()</code> / <code>Auth0({ … })</code></td><td>Optional managed strategy — Token Vault + CIBA. From <code>nominee-auth0</code>.</td></tr>
+            </tbody>
+          </table>
+          <p>Implementing your own is one method, <code>getToken()</code> — see <a href="https://github.com/bharath31/nominee/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>.</p>
+
+          <h3>Auth0 (optional managed upgrade)</h3>
+          <p>Same API — swap the strategy to get managed Token Vault tokens and CIBA phone approvals, with no change to your agent code. For a single tenant, <code>auth0()</code> reads everything from the environment:</p>
+          <pre><code>import { Nominee } from 'nominee'
+import { auth0 } from 'nominee-auth0'
+
+// reads AUTH0_DOMAIN / CLIENT_ID / CLIENT_SECRET / REFRESH_TOKEN / USER_SUB
+const nominee = new Nominee({ strategy: auth0() })   // managed Token Vault + CIBA
+
+const token = await nominee.token({ user, connection: 'github' }) // always fresh</code></pre>
+          <p>Unconfigured, <code>auth0()</code> falls back to a built-in mock (short-TTL token + auto-approve) so examples run with zero setup — set the env and the <em>same call</em> becomes real. For per-request <code>subjectToken</code>, multi-tenancy, or custom CIBA options, use the explicit <code>Auth0({ … })</code> form.</p>
+        </section>
+
         <section id="adapters" class="doc-section">
           <h2>Framework adapters</h2>
-          <p>Adapters wrap a tool so it gets a fresh token and an approval gate automatically. Both expose <code>nomineeTool()</code> and <code>withNominee()</code>.</p>
+          <p>Drop nominee into any tool: an adapter wraps it so it gets a fresh token and an approval gate automatically. Both expose <code>nomineeTool()</code> and <code>withNominee()</code>.</p>
           <pre><code>import { nomineeTool } from 'nominee-ai' // or 'nominee-eve'
 import { z } from 'zod'
 
@@ -169,37 +291,13 @@ const starRepo = nomineeTool({
   },
 })</code></pre>
           <p>
-            <code>nominee-ai</code> targets the Vercel AI SDK (and Cloudflare Agents,
-            which use it). <code>nominee-eve</code> targets Vercel Eve and returns a
-            real <code>defineTool()</code>. The execute context is
-            <code>{ token?, user, ai }</code> for AI SDK and <code>{ token?, user, eve }</code> for Eve.
+            <code>nominee-ai</code> targets the Vercel AI SDK (and Cloudflare Agents, which use
+            it). <code>nominee-eve</code> targets Vercel Eve and returns a real
+            <code>defineTool()</code>. The execute context is <code>{ token?, user, ai }</code>
+            for AI SDK and <code>{ token?, user, eve }</code> for Eve. The
+            <a href="https://github.com/bharath31/nominee/tree/main/examples/ai-sdk-minimal">ai-sdk-minimal</a>
+            example is the whole integration in ~25 lines.
           </p>
-        </section>
-
-        <section id="auth0" class="doc-section">
-          <h2>Auth0 (optional managed upgrade)</h2>
-          <p>Same API — swap the strategy to get managed Token Vault tokens and CIBA phone approvals, with no change to your agent code. For a single-tenant setup, that's <em>one line</em>: <code>auth0()</code> reads everything from the environment.</p>
-          <pre><code>import { Nominee } from 'nominee'
-import { auth0 } from 'nominee-auth0'
-
-// reads AUTH0_DOMAIN / CLIENT_ID / CLIENT_SECRET / REFRESH_TOKEN / USER_SUB
-const nominee = new Nominee({ strategy: auth0() })   // managed Token Vault + CIBA
-
-const token = await nominee.token({ user, connection: 'github' }) // always fresh</code></pre>
-          <p>Unconfigured, <code>auth0()</code> falls back to a built-in mock (short-TTL token + auto-approve) so examples run with zero setup — set the env and the <em>same call</em> becomes real, no code change.</p>
-          <p>Need per-request <code>subjectToken</code>, multi-tenancy, or custom CIBA options? Use the explicit <code>Auth0({ … })</code> form:</p>
-          <pre><code>import { Nominee } from 'nominee'
-import { Auth0 } from 'nominee-auth0'
-
-const nominee = new Nominee({
-  strategy: Auth0({
-    domain: process.env.AUTH0_DOMAIN!,
-    clientId: process.env.AUTH0_CLIENT_ID!,
-    clientSecret: process.env.AUTH0_CLIENT_SECRET!,
-    subjectToken: ({ user }) => store.getRefreshToken(user),
-    ciba: { loginHint: (user) => store.getSub(user) }, // enables phone approval
-  }),
-})</code></pre>
         </section>
 
         <section id="api" class="doc-section">
@@ -229,19 +327,13 @@ const nominee = new Nominee({
           </ul>
         </section>
 
-        <section id="audit" class="doc-section">
-          <h2>Audit events</h2>
-          <p>Every privileged op emits an event to <code>onAudit</code> / <code>on()</code>. Event <code>type</code> is one of:</p>
-          <p><code>token.issued</code> · <code>token.cached</code> · <code>token.error</code> · <code>token.invalidated</code> · <code>token.exchanged</code> · <code>approval.requested</code> · <code>approval.resolved</code> · <code>authz.checked</code></p>
-          <p>Each event includes <code>{ type, user, agent?, connection?, action?, resource?, decision?, chain?, at, detail? }</code>. <code>chain</code> is the delegation chain (e.g. <code>['orchestrator', 'research-agent']</code>), <code>at</code> is epoch ms.</p>
-        </section>
-
         <section id="security" class="doc-section">
-          <h2>Security</h2>
+          <h2>Security model</h2>
           <ul>
-            <li><strong>Never hold tokens.</strong> Call <code>token()</code> at the moment of use. nominee caches in memory only and never persists third-party tokens.</li>
+            <li><strong>Never hold tokens.</strong> Call <code>token()</code> at the moment of use. nominee caches in memory only and never persists third-party tokens itself — your strategy/store owns the refresh token.</li>
             <li><strong>Gate the irreversible.</strong> Require <code>approval</code> for deletes, payments, outbound mail, and anything you couldn't easily undo.</li>
             <li><strong>Keep the audit stream.</strong> Pipe <code>onAudit</code> to durable storage so you can always answer "who authorized this?".</li>
+            <li><strong>Attribute delegated actions.</strong> Use <code>delegate()</code> / <code>exchange()</code> so a sub-agent's actions carry the full identity chain.</li>
             <li>Report vulnerabilities privately — see <a href="https://github.com/bharath31/nominee/blob/main/SECURITY.md">SECURITY.md</a>.</li>
           </ul>
         </section>

@@ -10,6 +10,13 @@ export interface OAuth2Connection {
    * it per (user, connection). This is where you read from your own token store.
    */
   refreshToken: string | ((params: GetTokenParams) => string | Promise<string>)
+  /**
+   * Called when the token endpoint returns a NEW (rotated) refresh token.
+   * Persist it to the same store `refreshToken` reads from. Required for any
+   * provider that rotates refresh tokens (GitHub, Google one-time, Okta, Auth0
+   * rotation): without it, the next refresh uses a dead token and fails.
+   */
+  onRefreshToken?: (params: GetTokenParams, refreshToken: string) => void | Promise<void>
 }
 
 export interface OAuth2Options {
@@ -74,6 +81,9 @@ export function OAuth2(options: OAuth2Options): Strategy {
       }
 
       const json = (await res.json()) as TokenEndpointResponse
+      if (json.refresh_token && json.refresh_token !== refreshToken && conn.onRefreshToken) {
+        await conn.onRefreshToken(params, json.refresh_token)
+      }
       const result: TokenResult = { token: json.access_token }
       if (typeof json.expires_in === 'number') {
         result.expiresAt = Date.now() + json.expires_in * 1000

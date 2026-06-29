@@ -1,0 +1,5 @@
+node_modules
+# Per-scenario durable stores written at runtime
+.b.json
+.c.json
+.d.json
