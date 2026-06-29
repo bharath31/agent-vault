@@ -27,6 +27,34 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@26.0.0)
 
+  examples/ai-sdk-github-agent:
+    dependencies:
+      '@ai-sdk/openai':
+        specifier: ^3.0.0
+        version: 3.0.77(zod@4.4.3)
+      ai:
+        specifier: ^6.0.0
+        version: 6.0.208(zod@4.4.3)
+      nominee:
+        specifier: workspace:*
+        version: link:../../packages/core
+      nominee-ai:
+        specifier: workspace:*
+        version: link:../../packages/ai
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.2
+        version: 22.19.21
+      tsx:
+        specifier: ^4.22.4
+        version: 4.22.4
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+
   examples/ai-sdk-minimal:
     dependencies:
       '@ai-sdk/openai':
