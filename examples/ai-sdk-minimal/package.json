@@ -1,0 +1,23 @@
+{
+  "name": "ai-sdk-minimal",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Drop nominee into a Vercel AI SDK tool in one wrapper — fresh token + human approval + audit, no SaaS.",
+  "scripts": {
+    "start": "tsx agent.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "^3.0.0",
+    "ai": "^6.0.0",
+    "nominee": "workspace:*",
+    "nominee-ai": "workspace:*",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.22.4",
+    "typescript": "^5.6.3"
+  }
+}
