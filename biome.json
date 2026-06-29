@@ -8,6 +8,7 @@
       "*.d.ts",
       "site",
       "launch",
+      "brand/compositions",
       ".wrangler",
       ".eve",
       ".workflow-data",

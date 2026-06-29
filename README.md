@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bharath31/nominee/main/.github/media/banner.png?v=4" alt="nominee — fresh tokens, human approval, and an audit trail for agents that act on your users' behalf" width="100%" />
+  <img src="https://raw.githubusercontent.com/bharath31/nominee/main/.github/media/banner.png?v=5" alt="nominee — fresh tokens, human approval, and an audit trail for agents that act on your users' behalf" width="100%" />
 </p>
 
 <p align="center">
@@ -23,7 +23,7 @@
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bharath31/nominee/main/.github/media/nominee-demo.gif?v=1" alt="A long-running agent's token expires mid-run; the same agent with nominee re-resolves a fresh token at the call, then pauses a sensitive action for phone approval — with a full audit trail." width="100%" />
+  <img src="https://raw.githubusercontent.com/bharath31/nominee/main/.github/media/nominee-proof.gif?v=1" alt="Terminal: naive OAuth refresh under rotation and concurrency fails 7/8 with invalid_grant; nominee gets 8/8 with the same agent code." width="100%" />
 </p>
 
 <p align="center">
